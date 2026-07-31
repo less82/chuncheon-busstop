@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+/* 디자인 토큰 (spec §6): 춘천 블루 키컬러, 아이콘 배제 단어 카드 UI */
+@theme {
+  --color-primary: #004f9e; /* 춘천 블루 */
+  --color-primary-soft: #e8f0fa;
+  --color-warn: #d9480f; /* 폭염·경고 보조색 */
+  --color-warn-soft: #fff0e6;
+  --color-ink: #17202b;
+  --color-muted: #5b6672;
+  --color-line: #dbe2ea;
+  --color-bg: #f5f7fa;
+}
+
+html {
+  /* 어르신 접근성: 기본 글자 크게 (spec §6, 20px+) */
+  font-size: 20px;
+}
+
+/* 지도 내 위치 블루닷 펄스 */
+@keyframes locpulse {
+  0% { transform: scale(0.6); opacity: 0.9; }
+  70% { transform: scale(1.6); opacity: 0; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family:
+    "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+    "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  word-break: keep-all;
+  -webkit-tap-highlight-color: transparent;
+}

@@ -1,0 +1,51 @@
+# ── 비밀키 (최우선: main push = Vercel 배포) ────────────────
+.env
+.env.*
+!.env.example
+*.pem
+
+# ── 사전데이터 번들 (1.17GB, 실키 포함 — 절대 커밋 금지) ─────
+# 필요한 산출물(stops.json 등)은 lib/data/ 로 복사해서 쓴다.
+춘천시_사전데이터/
+
+# ── 대용량 바이너리 ────────────────────────────────────────
+*.zip
+*.pt
+*.bundle
+*.onnx
+*.cache
+
+# ── Node / Next.js ─────────────────────────────────────────
+node_modules/
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# ── 로그 ───────────────────────────────────────────────────
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ── 배포 / 테스트 ──────────────────────────────────────────
+.vercel
+coverage/
+
+# ── OS / 에디터 ────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# oh(배포 브랜치) 전용: 앱과 무관한 문서·데이터 제외
+docs/
+data/
+CLAUDE.md
+대회규정.pdf
+맹라현.md
+발표구성.png

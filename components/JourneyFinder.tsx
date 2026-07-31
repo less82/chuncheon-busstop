@@ -185,14 +185,12 @@ export default function JourneyFinder() {
                     <span className="ml-1 text-[0.75rem] text-muted">({(l as BusLeg).rideStops}개 정류장)</span>
                   </p>
                   <div className="mt-1.5">
-                    <FacilityChips fac={(l as BusLeg).boardFac} compact />
+                    <FacilityChips fac={(l as BusLeg).boardFac} oneLine />
                   </div>
                 </div>
               ),
             )}
           </div>
-
-          <p className="mt-3 text-right text-[0.9rem] font-bold text-primary">이 경로로 안내 →</p>
         </button>
       )}
     </div>

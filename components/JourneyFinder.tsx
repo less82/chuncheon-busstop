@@ -21,10 +21,11 @@ export default function JourneyFinder() {
   const [myCoord, setMyCoord] = useState<{ lat: number; lng: number } | null>(null);
 
   // 이전 검색 복원 (홈 스택 상태 유지)
+  // 구버전이 저장한 "내 위치" 이름은 버리고 아래 역지오코딩으로 실제 주소를 다시 받는다
   useEffect(() => {
     const s = loadJourneyState();
     if (s) {
-      setOrigin(s.origin);
+      if (s.origin && s.origin.name !== "내 위치") setOrigin(s.origin);
       setDest(s.dest);
     }
   }, []);

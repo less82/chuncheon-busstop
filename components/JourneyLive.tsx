@@ -133,10 +133,22 @@ export default function JourneyLive() {
       new kakao.maps.CustomOverlay({ map, position: new kakao.maps.LatLng(sh.lat, sh.lng), content: el, yAnchor: 1, zIndex: 4 });
     }
 
-    const dotColor: Record<string, string> = { 승차: "#004f9e", 환승: "#d9480f", 하차: "#17202b", 도착: "#2b8a3e" };
+    const dotColor: Record<string, string> = { 승차: "#004f9e", 환승: "#d9480f", 하차: "#17202b", 도착: "#17202b" };
     let departMarked = false;
     for (const n of nodes) {
       const el = document.createElement("div");
+      if (n.role === "도착") {
+        // 도착 = 검은 쉼표 핀 (서비스 상징) — 정체를 알 수 없는 검은 점 대신
+        el.style.cssText = "width:34px;height:42px;";
+        el.innerHTML =
+          '<svg width="34" height="42" viewBox="0 0 34 42">' +
+          '<path d="M17 41C17 41 4 25 4 14.5a13 13 0 0 1 26 0C30 25 17 41 17 41z" fill="#17202b" stroke="#fff" stroke-width="2"/>' +
+          '<path d="M19.6 10.2c1.9 0 3.3 1.4 3.3 3.4 0 2.6-2 4.9-5 6.1l-.8-1.3c1.6-.8 2.6-1.8 3-2.8-.2 .1-.5 .1-.8 .1-1.8 0-3-1.2-3-2.8 0-1.6 1.4-2.7 3.3-2.7z" fill="#fff"/>' +
+          "</svg>";
+        el.title = n.name;
+        new kakao.maps.CustomOverlay({ map, position: new kakao.maps.LatLng(n.lat, n.lng), content: el, yAnchor: 1, zIndex: 6 });
+        continue;
+      }
       if (n.role === "승차" && !departMarked) {
         // 출발(첫 승차) 정류장 = 빨간 핀 마커
         departMarked = true;
@@ -240,11 +252,12 @@ export default function JourneyLive() {
                     {isStopNode ? (
                       <div
                         onClick={() => setFocusNode((v) => (v === i ? null : i))}
+                        // 두 상태를 다른 축으로 구분: 현재 위치=파란 채움(테두리 없음), 탭해서 보는 중=파란 테두리
                         className={`rounded-xl border-2 p-2 ${
                           focusNode === i
-                            ? "border-primary bg-white ring-2 ring-primary/30"
+                            ? "border-primary bg-white"
                             : isCurNode
-                              ? "border-primary bg-primary-soft"
+                              ? "border-transparent bg-primary-soft"
                               : `border-line bg-white ${passed ? "opacity-60" : ""}`
                         }`}
                       >
@@ -300,7 +313,7 @@ export default function JourneyLive() {
                   {/* 버스 이동 중 — 승차/환승 박스와 다음 박스 사이에 현재 정류장이 실시간으로 끼어듦 */}
                   {riding && (
                     <div>
-                      <div className="rounded-xl border-2 border-primary bg-primary-soft p-2.5">
+                      <div className="rounded-xl border-2 border-transparent bg-primary-soft p-2.5">
                         <div className="flex items-center gap-1.5">
                           <span className="shrink-0 rounded-md bg-white px-2 py-0.5 text-[0.75rem] font-black text-primary ring-1 ring-line">
                             버스 안

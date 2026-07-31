@@ -105,24 +105,15 @@ export default function PlaceSearchModal({
         className="flex max-h-[88%] w-full max-w-sm flex-col rounded-3xl bg-bg p-4 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* 헤더 */}
-        <div className="flex items-center justify-between pb-2">
-          <p className="text-[1.05rem] font-black">{label} 장소 찾기</p>
-          <button
-            type="button"
-            onClick={onClose}
-            className="min-h-11 rounded-xl px-3 text-[0.9rem] font-bold text-muted active:bg-primary-soft"
-          >
-            닫기
-          </button>
-        </div>
+        {/* 헤더 (닫기 버튼 없음 — 바깥 배경을 누르면 닫힌다) */}
+        <p className="pb-2 text-[1.05rem] font-black">{label} 장소 찾기</p>
 
         {/* 검색 입력 */}
         <div className="flex items-stretch gap-2">
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="주소·건물·가게 이름"
+            placeholder="이곳에 입력해 주세요"
             autoFocus
             className="min-h-13 w-full rounded-xl border-2 border-primary bg-white px-4 text-[0.95rem] outline-none"
           />

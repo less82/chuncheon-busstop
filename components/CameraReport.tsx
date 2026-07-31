@@ -95,13 +95,12 @@ export default function CameraReport() {
             </p>
           </div>
         ) : phase === "idle" ? (
-          <>
-            <h1 className="text-[1.6rem] font-black leading-snug">사진 한 장으로 알려주세요</h1>
-            <p className="mt-2 text-[0.95rem] text-muted">사진을 찍어 보내기만 하면 됩니다.</p>
-            <p className="mt-4 text-[0.8rem] leading-relaxed text-muted">
+          <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
+            <p className="text-[1.4rem] font-black leading-snug">그냥 사진 찍으면 됩니다</p>
+            <p className="text-[0.85rem] leading-relaxed text-muted">
               사진에 사람 얼굴이나 차량번호가 나오지 않게 해주세요.
             </p>
-          </>
+          </div>
         ) : (
           <>
             {previewUrl && (

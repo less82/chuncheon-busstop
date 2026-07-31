@@ -100,6 +100,9 @@ export default function MapView() {
       center: new kakao.maps.LatLng(center.lat, center.lng),
       level: FIXED_LEVEL,
     });
+    // 쉼터 지도는 고정 화면 — 스크롤(팬)·확대축소 없이 내 위치 주변만 보여준다
+    map.setDraggable(false);
+    map.setZoomable(false);
     mapRef.current = map;
 
     // 카드 바깥(지도)을 누르면 닫힘 — 쉼터 핀은 clickable:true라 이 이벤트를 막는다

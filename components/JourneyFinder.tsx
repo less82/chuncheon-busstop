@@ -14,6 +14,15 @@ import PlaceSearchModal from "./PlaceSearch";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Picking = "origin" | "dest" | null;
 
+// 긴 주소는 "…춘천시"에서 한 번 끊어 두 줄로 (장소 이름 등 춘천시가 없으면 그대로)
+function splitAddr(name: string): [string, string] | null {
+  const i = name.indexOf("춘천시");
+  if (i < 0) return null;
+  const head = name.slice(0, i + 3).trim();
+  const tail = name.slice(i + 3).trim();
+  return tail ? [head, tail] : null;
+}
+
 export default function JourneyFinder() {
   const router = useRouter();
   const kakaoReady = useKakaoReady();
@@ -111,13 +120,13 @@ export default function JourneyFinder() {
 
   return (
     <div className="flex flex-col gap-3">
-      {/* 헤더: 제목 + 리셋 (지우개 아이콘 + 단어 — 새로고침과 혼동 방지) */}
+      {/* 헤더: 제목이 시각 위계 최상위 — 리셋 버튼은 터치 타깃(44px)만 지키고 가볍게 */}
       <div className="mb-1 flex items-center justify-between">
-        <h1 className="text-[1.25rem] font-black leading-snug">어디로 가시나요?</h1>
+        <h1 className="text-[1.5rem] font-black leading-snug">어디로 가시나요?</h1>
         <button
           type="button"
           onClick={resetAll}
-          className="min-h-11 rounded-xl border-2 border-line bg-white px-3 text-[0.85rem] font-bold text-muted active:bg-primary-soft"
+          className="min-h-11 rounded-xl border border-line bg-white px-2.5 text-[0.8rem] font-bold text-muted active:bg-primary-soft"
         >
           다시 입력
         </button>
@@ -128,10 +137,24 @@ export default function JourneyFinder() {
         onClick={() => setPicking("origin")}
         className="rounded-2xl border-2 border-line bg-white p-4 text-left active:bg-primary-soft"
       >
-        <p className="text-[0.8rem] font-bold text-muted">출발</p>
+        <p className="flex items-center justify-between text-[0.8rem] font-bold text-muted">
+          출발
+          <span className="font-bold text-primary">눌러서 변경 ›</span>
+        </p>
         <p className="mt-0.5 text-[1.05rem] font-bold">
-          {origin ? origin.name : <span className="text-muted">주소를 찾는 중…</span>}
-          <span className="ml-2 text-[0.85rem] font-bold text-primary">변경</span>
+          {origin ? (
+            splitAddr(origin.name) ? (
+              <>
+                {splitAddr(origin.name)![0]}
+                <br />
+                {splitAddr(origin.name)![1]}
+              </>
+            ) : (
+              origin.name
+            )
+          ) : (
+            <span className="text-muted">주소를 찾는 중…</span>
+          )}
         </p>
       </button>
 
@@ -140,10 +163,12 @@ export default function JourneyFinder() {
         onClick={() => setPicking("dest")}
         className="rounded-2xl border-2 border-line bg-white p-4 text-left active:bg-primary-soft"
       >
-        <p className="text-[0.8rem] font-bold text-muted">도착</p>
+        <p className="flex items-center justify-between text-[0.8rem] font-bold text-muted">
+          도착
+          <span className="font-bold text-primary">눌러서 변경 ›</span>
+        </p>
         <p className="mt-0.5 text-[1.05rem] font-bold">
           {dest ? dest.name : <span className="text-muted">어디로 가세요?</span>}
-          {dest && <span className="ml-2 text-[0.85rem] font-bold text-primary">변경</span>}
         </p>
       </button>
 

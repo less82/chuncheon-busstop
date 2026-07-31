@@ -9,6 +9,8 @@ import type { SlimStop } from "@/lib/types";
 import { DEFAULT_CENTER, distanceM } from "@/lib/geo";
 
 const ALL = slimStops as SlimStop[];
+// 관리자 대시보드는 별도 배포 — URL이 설정된 경우에만 링크를 노출한다
+const ADMIN_URL = process.env.NEXT_PUBLIC_ADMIN_URL;
 
 type Phase = "idle" | "preview" | "sending" | "done" | "error";
 
@@ -119,6 +121,18 @@ export default function CameraReport() {
           </>
         )}
       </div>
+
+      {/* 담당자용 대시보드 (같은 Supabase를 보므로 여기서 보낸 제보가 그대로 뜬다) */}
+      {ADMIN_URL && (
+        <a
+          href={ADMIN_URL}
+          target="_blank"
+          rel="noreferrer"
+          className="shrink-0 pt-2 text-center text-[0.75rem] font-bold text-muted underline underline-offset-4"
+        >
+          춘천시 담당자용 대시보드 열기
+        </a>
+      )}
 
       {/* 하단 고정 버튼 */}
       <div className="shrink-0 pt-3">

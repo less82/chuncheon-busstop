@@ -17,6 +17,15 @@ html {
   font-size: 20px;
 }
 
+/* 스크롤바 숨김 (내부 스크롤은 유지) */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* 지도 내 위치 블루닷 펄스 */
 @keyframes locpulse {
   0% { transform: scale(0.6); opacity: 0.9; }

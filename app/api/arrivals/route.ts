@@ -6,8 +6,9 @@ import { getStop } from "@/lib/stops.server";
 import type { Arrival, ArrivalsResponse } from "@/lib/arrivals";
 
 const CITY_CODE = 32010;
+// https 필수 — Vercel(클라우드)에서 http 발신은 실패함 (로컬은 둘 다 동작)
 const BASE =
-  "http://apis.data.go.kr/1613000/ArvlInfoInqireService/getSttnAcctoArvlPrearngeInfoList";
+  "https://apis.data.go.kr/1613000/ArvlInfoInqireService/getSttnAcctoArvlPrearngeInfoList";
 
 // 인메모리 캐시 (10초) — 같은 정류장 폴링 부하 방지
 const cache = new Map<string, { at: number; data: ArrivalsResponse }>();
@@ -23,7 +24,7 @@ async function fetchTago(stopId: string): Promise<Arrival[]> {
   const key = process.env.TAGO_SERVICE_KEY;
   if (!key) throw new Error("TAGO_SERVICE_KEY missing");
   const url = `${BASE}?serviceKey=${encodeURIComponent(key)}&cityCode=${CITY_CODE}&nodeId=CCB${stopId}&numOfRows=30&_type=json`;
-  const res = await fetch(url, { signal: AbortSignal.timeout(6000), cache: "no-store" });
+  const res = await fetch(url, { signal: AbortSignal.timeout(8000), cache: "no-store" });
   if (!res.ok) throw new Error(`TAGO ${res.status}`);
   const json = await res.json();
   const raw = json?.response?.body?.items?.item;

@@ -115,8 +115,22 @@ export default function JourneyLive() {
       new kakao.maps.Polyline({ map, path, strokeWeight: 5, strokeColor: "#004f9e", strokeOpacity: 0.75 });
     }
     const dotColor: Record<string, string> = { 승차: "#004f9e", 환승: "#d9480f", 하차: "#17202b", 도착: "#2b8a3e" };
+    let departMarked = false;
     for (const n of nodes) {
       const el = document.createElement("div");
+      if (n.role === "승차" && !departMarked) {
+        // 출발(첫 승차) 정류장 = 빨간 핀 마커
+        departMarked = true;
+        el.style.cssText = "width:34px;height:42px;";
+        el.innerHTML =
+          '<svg width="34" height="42" viewBox="0 0 34 42">' +
+          '<path d="M17 41C17 41 4 25 4 14.5a13 13 0 0 1 26 0C30 25 17 41 17 41z" fill="#d62626" stroke="#fff" stroke-width="2"/>' +
+          '<text x="17" y="18.5" text-anchor="middle" fill="#fff" font-size="9" font-weight="900">출발</text>' +
+          "</svg>";
+        el.title = n.name;
+        new kakao.maps.CustomOverlay({ map, position: new kakao.maps.LatLng(n.lat, n.lng), content: el, yAnchor: 1, zIndex: 6 });
+        continue;
+      }
       el.style.cssText = `width:14px;height:14px;border-radius:50%;background:${dotColor[n.role] ?? "#9aa4af"};border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);`;
       el.title = n.name;
       new kakao.maps.CustomOverlay({ map, position: new kakao.maps.LatLng(n.lat, n.lng), content: el, yAnchor: 0.5 });

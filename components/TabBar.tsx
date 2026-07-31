@@ -9,8 +9,8 @@ export default function TabBar() {
   const pathname = usePathname();
   const router = useRouter();
   const isMap = pathname.startsWith("/map");
-  const isFav = pathname.startsWith("/favorites");
-  const isHome = !isMap && !isFav;
+  const isReport = pathname.startsWith("/report");
+  const isHome = !isMap && !isReport;
 
   const cls = (active: boolean) =>
     `flex min-h-14 w-full items-center justify-center text-[0.95rem] font-bold ${
@@ -26,8 +26,8 @@ export default function TabBar() {
         <Link href="/map" className={cls(isMap)}>
           지도
         </Link>
-        <Link href="/favorites" className={cls(isFav)}>
-          저장
+        <Link href="/report" className={cls(isReport)}>
+          민원
         </Link>
       </div>
     </nav>

@@ -9,7 +9,7 @@ export default function HomePathTracker() {
   const pathname = usePathname();
   const params = useSearchParams();
   useEffect(() => {
-    if (pathname.startsWith("/map") || pathname.startsWith("/favorites")) return;
+    if (pathname.startsWith("/map") || pathname.startsWith("/favorites") || pathname.startsWith("/report")) return;
     const qs = params.toString();
     trackHomePath(qs ? `${pathname}?${qs}` : pathname);
   }, [pathname, params]);

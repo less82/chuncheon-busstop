@@ -95,7 +95,6 @@ export default function JourneyLive() {
   if (!data || !nodes || !positions) return null;
   const curIdx = demo ? Math.min(demoIdx, positions.length - 1) : gpsIdx;
   const cur = curIdx === null ? null : positions[curIdx];
-  const remMin = (cur ?? positions[0]).remMin;
 
   const curBadge = (
     <span className="ml-auto shrink-0 rounded-md bg-primary px-1.5 py-0.5 text-[0.65rem] font-bold text-white">
@@ -120,14 +119,11 @@ export default function JourneyLive() {
 
   return (
     <div className="flex h-full flex-col">
-      {/* 남은 시간 헤더 */}
+      {/* 경로 헤더 */}
       <div className="rounded-2xl bg-primary px-4 py-2.5 text-white">
-        <p className="text-[1.2rem] font-black leading-tight">
-          도착까지 약 {remMin}분 <span className="text-[0.75rem] font-normal opacity-80">(예상)</span>
-        </p>
-        <p className="mt-0.5 truncate text-[0.75rem] opacity-90">
+        <p className="truncate text-[0.95rem] font-bold">
           {data.origin.name} → {data.dest.name}
-          {!demo && cur === null && " · 내 위치 확인 중"}
+          {!demo && cur === null && <span className="font-normal opacity-80"> · 내 위치 확인 중</span>}
         </p>
       </div>
 

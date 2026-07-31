@@ -37,30 +37,20 @@ function JourneyCard({ j, rank, onSelect }: { j: Journey; rank: number; onSelect
       className={`w-full rounded-2xl border-2 p-4 text-left active:opacity-80 ${rank === 1 ? "border-primary bg-primary-soft" : "border-line bg-white"}`}
     >
       <div className="flex items-baseline justify-between">
-        <p className="text-[1.25rem] font-black">
+        <p className="text-[1.05rem] font-black">
           {rank === 1 && <span className="mr-1.5 rounded-md bg-primary px-1.5 py-0.5 text-[0.75rem] text-white">추천</span>}
-          약 {j.estMinutes}분 <span className="text-[0.8rem] font-normal text-muted">(예상)</span>
-        </p>
-        <p className="text-[0.85rem] font-bold text-muted">
           {j.transfers === 0 ? "환승 없음" : `환승 ${j.transfers}회`}
         </p>
       </div>
 
       <div className="mt-2 flex flex-col gap-2">
         {j.legs.map((l, i) =>
-          l.kind === "walk" ? (
-            <p key={i} className="text-[0.8rem] text-muted">
-              걷기 {l.minutes}분 — {l.from} → {l.to}
-            </p>
-          ) : (
+          l.kind === "walk" ? null : (
             <div key={i} className="rounded-xl bg-white/80 p-2.5 ring-1 ring-line/60">
               <p className="text-[0.95rem]">
                 <span className="rounded-md bg-primary px-2 py-0.5 font-black text-white">
                   {(best[i] ? best[i]!.routeNo : (l as BusLeg).routeNo.split("·")[0])}번
                 </span>
-                {best[i] && (
-                  <span className="ml-1.5 text-[0.8rem] font-bold text-primary">{best[i]!.minutes}분 후</span>
-                )}
                 <span className="ml-2 font-bold">{(l as BusLeg).boardName}</span>
                 <span className="text-muted"> 승차 → </span>
                 <span className="font-bold">{(l as BusLeg).alightName}</span>
@@ -127,7 +117,7 @@ export default function JourneyResults() {
             <JourneyCard key={j.id} j={j} rank={i + 1} onSelect={() => select(j)} />
           ))}
           <p className="text-center text-[0.7rem] text-muted">
-            경로를 누르면 실시간 안내가 시작돼요 · 예상 시간은 이동 거리 기반 추정값이에요
+            경로를 누르면 실시간 안내가 시작돼요
           </p>
         </div>
       )}

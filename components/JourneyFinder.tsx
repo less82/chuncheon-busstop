@@ -193,12 +193,6 @@ export default function JourneyFinder() {
               const isTransfer = journey.legs.slice(0, i).some((x) => x.kind === "bus");
               return (
                 <div key={i}>
-                  {isTransfer && (
-                    <p className="mb-1.5 flex items-center gap-1.5 text-[0.85rem] font-bold text-warn">
-                      <span className="rounded-md bg-warn px-1.5 py-0.5 text-[0.7rem] font-black text-white">환승</span>
-                      {(l as BusLeg).boardName}에서 갈아타세요
-                    </p>
-                  )}
                   <p className="text-[0.95rem]">
                     <span className="rounded-md bg-primary px-2 py-0.5 font-black text-white">
                       {(best[i] ? best[i]!.routeNo : (l as BusLeg).routeNo.split("·")[0])}번
@@ -213,7 +207,11 @@ export default function JourneyFinder() {
                   </p>
                   <p className="mt-1 text-[0.95rem]">
                     <span className="font-bold">{(l as BusLeg).boardName}</span>
-                    <span className="text-muted"> 승차 → </span>
+                    {isTransfer ? (
+                      <span className="font-bold text-warn"> 환승 → </span>
+                    ) : (
+                      <span className="text-muted"> 출발 → </span>
+                    )}
                     <span className="font-bold">{(l as BusLeg).alightName}</span>
                   </p>
                 </div>

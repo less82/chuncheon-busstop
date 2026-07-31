@@ -5,14 +5,17 @@
 // - 버스 이동 중이면 승차↔하차 박스 사이에 '지금 지나는 정류장' 박스가 실시간으로 끼어듦
 //   (경유 정류장 좌표는 BusLeg.path — 내 위치와 최근접 매칭)
 // - ?demo=1 : 시연 모드 — GPS 대신 버튼으로 경유 정류장 단위 이동 (데이터는 전부 실데이터)
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Arrival } from "@/lib/arrivals";
 import { distanceM, formatDistance } from "@/lib/geo";
 import { loadJourneyState } from "@/lib/journeyStore";
-import type { Journey, Place } from "@/lib/journey";
+import { type BusLeg, type Journey, type Place } from "@/lib/journey";
 import { buildNodes, buildPositions, type Role } from "@/lib/journeyFlow";
+import { useKakaoReady } from "@/lib/useKakao";
 import FacilityChips from "./FacilityChips";
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 const ROLE_STYLE: Record<Role, string> = {
   출발: "bg-white text-muted ring-1 ring-line",
@@ -27,11 +30,15 @@ type ArrState = Record<string, { ok: boolean; list: Arrival[] }>;
 export default function JourneyLive() {
   const router = useRouter();
   const params = useSearchParams();
+  const kakaoReady = useKakaoReady();
   const demo = params.get("demo") === "1"; // 시연 모드
   const [data, setData] = useState<{ j: Journey; origin: Place; dest: Place } | null>(null);
   const [arr, setArr] = useState<ArrState>({});
   const [gpsIdx, setGpsIdx] = useState<number | null>(null); // positions 인덱스
   const [demoIdx, setDemoIdx] = useState(0);
+  const mapBoxRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<any>(null);
+  const curOvRef = useRef<any>(null);
 
   useEffect(() => {
     const s = loadJourneyState();
@@ -92,8 +99,57 @@ export default function JourneyLive() {
     return () => navigator.geolocation.clearWatch(id);
   }, [positions, demo]);
 
+  // 상단 지도: 경로 폴리라인 + 정류장 점 (한 번 생성, 경로 전체가 보이게)
+  const [mapReady, setMapReady] = useState(false);
+  useEffect(() => {
+    if (!kakaoReady || !nodes || !data || !mapBoxRef.current || mapRef.current) return;
+    const kakao = window.kakao;
+    const map = new kakao.maps.Map(mapBoxRef.current, {
+      center: new kakao.maps.LatLng(nodes[0].lat, nodes[0].lng),
+      level: 5,
+    });
+    mapRef.current = map;
+    const bounds = new kakao.maps.LatLngBounds();
+    for (const leg of data.j.legs) {
+      if (leg.kind !== "bus") continue;
+      const path = (leg as BusLeg).path.map(([la, ln]) => new kakao.maps.LatLng(la, ln));
+      path.forEach((p) => bounds.extend(p));
+      new kakao.maps.Polyline({ map, path, strokeWeight: 5, strokeColor: "#004f9e", strokeOpacity: 0.75 });
+    }
+    const dotColor: Record<string, string> = { 승차: "#004f9e", 환승: "#d9480f", 하차: "#17202b", 도착: "#2b8a3e" };
+    for (const n of nodes) {
+      bounds.extend(new kakao.maps.LatLng(n.lat, n.lng));
+      const el = document.createElement("div");
+      el.style.cssText = `width:14px;height:14px;border-radius:50%;background:${dotColor[n.role] ?? "#9aa4af"};border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);`;
+      el.title = n.name;
+      new kakao.maps.CustomOverlay({ map, position: new kakao.maps.LatLng(n.lat, n.lng), content: el, yAnchor: 0.5 });
+    }
+    map.setBounds(bounds);
+    setMapReady(true);
+  }, [kakaoReady, nodes, data]);
+
+  // 지도 위 현재 위치 점(파랑 펄스) — 현재 노드·경유 정류장 좌표를 따라 이동
+  const curIdxCalc = positions ? (demo ? Math.min(demoIdx, positions.length - 1) : gpsIdx) : null;
+  useEffect(() => {
+    if (!mapReady || !mapRef.current || curIdxCalc === null || !positions) return;
+    const kakao = window.kakao;
+    const p = positions[curIdxCalc];
+    const pos = new kakao.maps.LatLng(p.lat, p.lng);
+    if (!curOvRef.current) {
+      const el = document.createElement("div");
+      el.innerHTML =
+        '<span style="position:absolute;inset:-8px;border-radius:50%;background:rgba(0,122,255,.25);animation:locpulse 2s ease-out infinite;"></span>' +
+        '<span style="position:absolute;inset:0;border-radius:50%;background:#007aff;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.45);"></span>';
+      el.style.cssText = "position:relative;width:16px;height:16px;";
+      curOvRef.current = new kakao.maps.CustomOverlay({ position: pos, content: el, yAnchor: 0.5, zIndex: 10 });
+      curOvRef.current.setMap(mapRef.current);
+    } else {
+      curOvRef.current.setPosition(pos);
+    }
+  }, [mapReady, curIdxCalc, positions]);
+
   if (!data || !nodes || !positions) return null;
-  const curIdx = demo ? Math.min(demoIdx, positions.length - 1) : gpsIdx;
+  const curIdx = curIdxCalc;
   const cur = curIdx === null ? null : positions[curIdx];
 
   const curBadge = (
@@ -119,6 +175,9 @@ export default function JourneyLive() {
 
   return (
     <div className="flex h-full flex-col">
+      {/* 상단 지도 (화면 절반) — 경로선·정류장 점·현재 위치 */}
+      <div ref={mapBoxRef} className="h-[42%] w-full shrink-0 overflow-hidden rounded-2xl border border-line bg-white" />
+
       {/* 시연 모드: GPS 대신 버튼으로 현재 위치 이동 (경유 정류장 단위) */}
       {demo && (
         <div className="mt-2 flex items-center gap-2 rounded-xl bg-warn-soft px-3 py-1.5">

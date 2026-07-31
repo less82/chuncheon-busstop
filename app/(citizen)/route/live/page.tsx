@@ -7,7 +7,7 @@ export default function RouteLivePage() {
   return (
     <div className="flex h-full flex-col">
       <AppHeader title="가는 길 안내" />
-      <main className="min-h-0 flex-1 overflow-y-auto px-3 pb-2 pt-2">
+      <main className="min-h-0 flex-1 overflow-hidden px-3 pb-2 pt-2">
         <Suspense>
           <JourneyLive />
         </Suspense>

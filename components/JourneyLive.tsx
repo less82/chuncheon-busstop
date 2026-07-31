@@ -252,13 +252,14 @@ export default function JourneyLive() {
                     {/* 모든 지점을 같은 카드 형태로 — 흐름이 카드→연결문구→카드로 읽힌다 */}
                     <div
                       onClick={() => setFocusNode((v) => (v === i ? null : i))}
-                      // 두 상태를 다른 축으로 구분: 현재 위치=파란 채움, 탭해서 보는 중=파란 테두리
-                      className={`rounded-2xl border-2 px-3 py-2 ${
+                      // 배경은 항상 흰색 — 상태는 파란 테두리 세기로만 구분
+                      // (현재 위치 = 파란 테두리, 탭해서 보는 중 = 파란 테두리 + 링)
+                      className={`rounded-2xl border-2 bg-white px-3 py-2 ${
                         focusNode === i
-                          ? "border-primary bg-white shadow-sm"
+                          ? "border-primary ring-2 ring-primary/35"
                           : isCurNode
-                            ? "border-transparent bg-primary-soft"
-                            : `border-line bg-white ${passed ? "opacity-60" : ""}`
+                            ? "border-primary"
+                            : `border-line ${passed ? "opacity-60" : ""}`
                       }`}
                     >
                       <div className="flex items-center gap-2">
@@ -306,7 +307,7 @@ export default function JourneyLive() {
                   {/* 버스 이동 중 — 승차/환승 박스와 다음 박스 사이에 현재 정류장이 실시간으로 끼어듦 */}
                   {riding && (
                     <div>
-                      <div className="rounded-2xl border-2 border-transparent bg-primary-soft px-3 py-2">
+                      <div className="rounded-2xl border-2 border-primary bg-white px-3 py-2">
                         <div className="flex items-center gap-2">
                           <span className="shrink-0 rounded-md bg-white px-2 py-0.5 text-[0.75rem] font-black text-primary ring-1 ring-line">
                             버스 안

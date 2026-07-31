@@ -59,7 +59,7 @@ export default function JourneyFinder() {
       });
     } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kakaoReady, myCoord]);
+  }, [kakaoReady, myCoord, origin]); // origin이 리셋되면(null) 주소를 다시 채운다
 
   // 추천 카드의 버스 번호: 가장 빨리 오는 한 대 (TAGO 실시간, 없으면 대표 번호)
   useEffect(() => {
@@ -86,6 +86,15 @@ export default function JourneyFinder() {
     setNoRoute(false);
   };
 
+  // 리셋: 도착·추천을 지우고 출발은 내 위치 주소로 다시 채움 (새로고침 아님 — 입력 초기화)
+  const resetAll = () => {
+    setDest(null);
+    setJourney(null);
+    setNoRoute(false);
+    setOrigin(null);
+    saveJourneyState(null);
+  };
+
   const confirm = () => {
     if (!origin || !dest) return;
     const j = recommendJourneys(origin, dest)[0] ?? null;
@@ -101,7 +110,24 @@ export default function JourneyFinder() {
   };
 
   return (
-    <div className="mt-5 flex flex-col gap-3">
+    <div className="flex flex-col gap-3">
+      {/* 헤더: 제목 + 리셋 (지우개 아이콘 + 단어 — 새로고침과 혼동 방지) */}
+      <div className="mb-1 flex items-center justify-between">
+        <h1 className="text-[1.25rem] font-black leading-snug">어디로 가시나요?</h1>
+        <button
+          type="button"
+          onClick={resetAll}
+          className="flex min-h-11 items-center gap-1.5 rounded-xl border-2 border-line bg-white px-3 text-[0.85rem] font-bold text-muted active:bg-primary-soft"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21" />
+            <path d="M22 21H7" />
+            <path d="m5 11 9 9" />
+          </svg>
+          다시 입력
+        </button>
+      </div>
+
       <button
         type="button"
         onClick={() => setPicking("origin")}

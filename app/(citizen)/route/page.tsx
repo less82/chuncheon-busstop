@@ -1,15 +1,6 @@
-import AppHeader from "@/components/AppHeader";
-import JourneyFinder from "@/components/JourneyFinder";
+import { redirect } from "next/navigation";
 
-// 경로 찾기 (개편): 장소 입력 → 환승 포함 경로 후보 + 정류장 시설 정보
+// v8: 가는 길 찾기가 홈(/)이 됨 — 기존 링크·홈 스택 호환용 리다이렉트만 유지
 export default function RoutePage() {
-  return (
-    <>
-      <AppHeader title="가는 길 찾기" />
-      <main className="px-5 pb-8 pt-4">
-        <h1 className="text-[1.25rem] font-black leading-snug">어디로 가시나요?</h1>
-        <JourneyFinder />
-      </main>
-    </>
-  );
+  redirect("/");
 }

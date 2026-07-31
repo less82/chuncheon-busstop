@@ -36,7 +36,7 @@ export default function JourneyLive() {
   useEffect(() => {
     const s = loadJourneyState();
     const j = s?.candidates.find((c) => c.id === s.selectedId);
-    if (!s || !j) { router.replace("/route"); return; }
+    if (!s || !j) { router.replace("/"); return; }
     setData({ j, origin: s.origin, dest: s.dest });
   }, [router]);
 
@@ -190,7 +190,7 @@ export default function JourneyLive() {
                         )}
                         {n.shelter && (
                           <p className="mt-1 text-[0.72rem] font-bold text-[#2b8a3e]">
-                            무더위쉼터 {n.shelter.name} · 직선 {formatDistance(n.shelter.dist)}
+                            무더위쉼터 {n.shelter.name} · {formatDistance(n.shelter.dist)}
                           </p>
                         )}
                       </div>

@@ -67,13 +67,26 @@ export default function PlaceSearchModal({
         q,
         (data: KakaoPlace[], status: string) => {
           setSearching(false);
-          setResults(status === window.kakao.maps.services.Status.OK ? data.slice(0, 15) : []);
+          if (status !== window.kakao.maps.services.Status.OK) {
+            setResults([]);
+            setPending(null);
+            return;
+          }
+          // 이름이 검색어와 맞는 곳을 먼저 (거리순만 쓰면 "춘천시장"에 무관한 근처 상점가가 올라온다)
+          const key = q.replace(/\s+/g, "");
+          const scored = data.map((p) => {
+            const name = p.place_name.replace(/\s+/g, "");
+            return { p, hit: name.includes(key) ? (name === key ? 2 : 1) : 0 };
+          });
+          const named = scored.filter((s) => s.hit > 0);
+          const list = (named.length > 0 ? named.sort((a, b) => b.hit - a.hit) : scored).map((s) => s.p);
+          setResults(list.slice(0, 15));
           setPending(null);
         },
         {
           location: new window.kakao.maps.LatLng(37.8813, 127.73),
           radius: 20000,
-          sort: window.kakao.maps.services.SortBy.DISTANCE,
+          sort: window.kakao.maps.services.SortBy.ACCURACY, // 관련도 우선 (거리 보정은 location으로)
         },
       );
     }, 350);
@@ -102,7 +115,7 @@ export default function PlaceSearchModal({
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/45 px-4" onClick={onClose}>
       <div
-        className="flex h-[94%] w-full max-w-sm flex-col rounded-3xl bg-bg p-4 shadow-2xl"
+        className="flex max-h-[92%] w-full max-w-sm flex-col rounded-3xl bg-bg p-4 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 (닫기 버튼 없음 — 바깥 배경을 누르면 닫힌다) */}
@@ -120,9 +133,9 @@ export default function PlaceSearchModal({
           <VoiceButton onResult={setQ} />
         </div>
 
-        {/* 결과 목록: 내부 스크롤 + 스크롤바 숨김. 선택한 항목 바로 아래에 지도가 펼쳐진다 */}
-        <div className="relative mt-3 min-h-0 flex-1">
-          <div ref={listRef} className="no-scrollbar h-full overflow-y-auto">
+        {/* 결과 목록: 내용만큼만 차지하고(반응형), 넘칠 때만 내부 스크롤 */}
+        <div className="relative mt-3 min-h-0 shrink">
+          <div ref={listRef} className="no-scrollbar max-h-full overflow-y-auto">
             {!q.trim() && (
               <p className="px-4 py-8 text-center leading-relaxed text-muted">
                 가고 싶은 곳의 이름이나 주소를 입력해 주세요

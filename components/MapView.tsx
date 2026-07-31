@@ -1,79 +1,31 @@
 "use client";
 
-// 지도 (v5): 경로 표시 없음 — 정류장·쉼터 레이어 전용
-// 내 위치 중심 + 축척 50m(레벨 3) 시작, 내 위치 = 블루닷(펄스)
+// 지도 (v6): 자체 정류장 마커 제거 — 카카오맵 기본 지도에 그려진 정류장 표시를 그대로 사용
+// 무더위쉼터 = 초록 핀 마커(기본 표시), 내 위치 = 블루닷(펄스), 축척 50m(레벨 3) 시작
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import slimStops from "@/lib/data/stops.slim.json";
 import sheltersRaw from "@/lib/data/shelters.json";
-import type { SlimStop, Shelter } from "@/lib/types";
+import type { Shelter } from "@/lib/types";
 import { DEFAULT_CENTER, formatDistance, distanceM } from "@/lib/geo";
 import { useKakaoReady } from "@/lib/useKakao";
-import FacilityChips from "./FacilityChips";
 
-const ALL = slimStops as SlimStop[];
 const SHELTERS = (sheltersRaw as Shelter[]).filter((s) => s.operating);
 const FIXED_LEVEL = 3; // 카카오맵 레벨 3 = 축척 50m (v5 지시)
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
-function markerColor(s: SlimStop): string {
-  let y = 0, known = 0;
-  for (const c of s.fac) {
-    if (c === "y") { y++; known++; }
-    else if (c === "n") known++;
-  }
-  if (y >= 3) return "#004f9e";
-  if (known === 0) return "#9aa4af";
-  return "#d9480f";
-}
 
 export default function MapView() {
   const params = useSearchParams();
   const ready = useKakaoReady();
   const boxRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
-  const stopOvs = useRef<any[]>([]);
   const shelterOvs = useRef<any[]>([]);
   const myOv = useRef<any>(null);
   const myPosRef = useRef<{ lat: number; lng: number } | null>(null);
 
-  const [showStops, setShowStops] = useState(true);
-  const [showShelters, setShowShelters] = useState(false);
-  const showStopsRef = useRef(true);
-  const showSheltersRef = useRef(false);
-  const [zoomedOut, setZoomedOut] = useState(false);
-  const [selected, setSelected] = useState<(SlimStop & { dist?: number }) | null>(null);
-
-  const renderStops = useCallback(() => {
-    const kakao = window.kakao;
-    const map = mapRef.current;
-    if (!map) return;
-    for (const o of stopOvs.current) o.setMap(null);
-    stopOvs.current = [];
-    if (!showStopsRef.current) { setZoomedOut(false); return; }
-    if (map.getLevel() > 6) { setZoomedOut(true); return; }
-    setZoomedOut(false);
-
-    const b = map.getBounds();
-    const sw = b.getSouthWest(), ne = b.getNorthEast();
-    const visible = ALL.filter(
-      (s) => s.lat >= sw.getLat() && s.lat <= ne.getLat() && s.lng >= sw.getLng() && s.lng <= ne.getLng(),
-    ).slice(0, 400);
-
-    for (const s of visible) {
-      const el = document.createElement("button");
-      el.style.cssText = `width:16px;height:16px;border-radius:50%;background:${markerColor(s)};border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);cursor:pointer;`;
-      el.onclick = () => {
-        const my = myPosRef.current;
-        setSelected({ ...s, dist: my ? distanceM(my.lat, my.lng, s.lat, s.lng) : undefined });
-      };
-      const ov = new kakao.maps.CustomOverlay({ position: new kakao.maps.LatLng(s.lat, s.lng), content: el, yAnchor: 0.5 });
-      ov.setMap(map);
-      stopOvs.current.push(ov);
-    }
-  }, []);
+  const [showShelters, setShowShelters] = useState(true);
+  const showSheltersRef = useRef(true);
+  const [selected, setSelected] = useState<(Shelter & { dist?: number }) | null>(null);
 
   const renderShelters = useCallback(() => {
     const kakao = window.kakao;
@@ -83,12 +35,20 @@ export default function MapView() {
     shelterOvs.current = [];
     if (!showSheltersRef.current) return;
     for (const sh of SHELTERS) {
-      const el = document.createElement("div");
-      el.textContent = "쉼";
+      const el = document.createElement("button");
       el.title = sh.name;
-      el.style.cssText =
-        "width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#fff;border:3px solid #2b8a3e;color:#2b8a3e;font-size:13px;font-weight:900;box-shadow:0 1px 5px rgba(0,0,0,.35);";
-      const ov = new kakao.maps.CustomOverlay({ position: new kakao.maps.LatLng(sh.lat, sh.lng), content: el, yAnchor: 0.5 });
+      el.style.cssText = "width:30px;height:38px;padding:0;border:0;background:none;cursor:pointer;";
+      el.innerHTML =
+        '<svg width="30" height="38" viewBox="0 0 30 38">' +
+        '<path d="M15 37C15 37 3 22.5 3 13a12 12 0 0 1 24 0c0 9.5-12 24-12 24z" fill="#2b8a3e" stroke="#fff" stroke-width="2"/>' +
+        '<text x="15" y="17.5" text-anchor="middle" fill="#fff" font-size="10.5" font-weight="900">쉼</text>' +
+        "</svg>";
+      el.onclick = () => {
+        const my = myPosRef.current;
+        setSelected({ ...sh, dist: my ? distanceM(my.lat, my.lng, sh.lat, sh.lng) : undefined });
+      };
+      // yAnchor 1 = 핀 꼬리 끝이 좌표에 닿게
+      const ov = new kakao.maps.CustomOverlay({ position: new kakao.maps.LatLng(sh.lat, sh.lng), content: el, yAnchor: 1 });
       ov.setMap(map);
       shelterOvs.current.push(ov);
     }
@@ -122,8 +82,7 @@ export default function MapView() {
       level: FIXED_LEVEL,
     });
     mapRef.current = map;
-    kakao.maps.event.addListener(map, "idle", renderStops);
-    renderStops();
+    renderShelters();
 
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -143,27 +102,17 @@ export default function MapView() {
   }, [ready]);
 
   useEffect(() => {
-    showStopsRef.current = showStops;
-    renderStops();
-  }, [showStops, renderStops]);
-  useEffect(() => {
     showSheltersRef.current = showShelters;
     renderShelters();
+    if (!showShelters) setSelected(null);
   }, [showShelters, renderShelters]);
 
   return (
     <div className="relative h-full">
       <div ref={boxRef} className="h-full w-full" />
 
-      {/* 레이어 토글 (v5: 뒤로·홈 제거) */}
-      <div className="absolute left-3 top-3 z-10 flex gap-2">
-        <button
-          type="button"
-          onClick={() => setShowStops((v) => !v)}
-          className={`rounded-xl px-3 py-1.5 text-[0.8rem] font-bold shadow ${showStops ? "bg-primary text-white" : "bg-white text-muted"}`}
-        >
-          정류장
-        </button>
+      {/* 레이어 토글 — 정류장은 카카오 기본지도 표시를 사용하므로 쉼터만 */}
+      <div className="absolute left-3 top-3 z-10">
         <button
           type="button"
           onClick={() => setShowShelters((v) => !v)}
@@ -173,20 +122,6 @@ export default function MapView() {
         </button>
       </div>
 
-      {showStops && (
-        <div className="absolute right-3 top-3 z-10 rounded-xl bg-white/95 px-3 py-2 text-[0.7rem] shadow">
-          <p><span className="mr-1 inline-block h-2.5 w-2.5 rounded-full bg-primary" />시설 양호</p>
-          <p><span className="mr-1 inline-block h-2.5 w-2.5 rounded-full bg-warn" />시설 부족</p>
-          <p><span className="mr-1 inline-block h-2.5 w-2.5 rounded-full bg-gray-400" />미확인</p>
-        </div>
-      )}
-
-      {zoomedOut && showStops && (
-        <p className="absolute left-1/2 top-16 z-10 -translate-x-1/2 whitespace-nowrap rounded-xl bg-white/95 px-4 py-2 text-[0.85rem] font-bold text-muted shadow">
-          지도를 확대하면 정류장이 보여요
-        </p>
-      )}
-
       {!ready && (
         <div className="absolute inset-0 flex items-center justify-center bg-bg">
           <p className="text-muted">지도를 불러오는 중…</p>
@@ -195,19 +130,23 @@ export default function MapView() {
 
       {selected && (
         <div className="absolute inset-x-3 bottom-3 z-20">
-          <Link href={`/stops/${selected.id}`} className="block rounded-2xl border border-line bg-white p-4 shadow-lg">
+          <div className="rounded-2xl border border-line bg-white p-4 shadow-lg">
             <div className="flex items-baseline justify-between">
               <p className="font-bold">
+                <span className="mr-1.5 rounded-md bg-[#2b8a3e] px-1.5 py-0.5 text-[0.7rem] text-white">쉼터</span>
                 {selected.name}
-                {selected.no && <span className="ml-1 text-[0.75rem] font-normal text-muted">({selected.no})</span>}
               </p>
               {selected.dist !== undefined && (
-                <p className="text-[0.85rem] font-bold text-primary">{formatDistance(selected.dist)}</p>
+                <p className="text-[0.85rem] font-bold text-[#2b8a3e]">{formatDistance(selected.dist)}</p>
               )}
             </div>
-            <div className="mt-2"><FacilityChips fac={selected.fac} /></div>
-            <p className="mt-2 text-[0.8rem] font-bold text-primary">자세히 보기 →</p>
-          </Link>
+            {(selected.kind || selected.addr) && (
+              <p className="mt-1.5 text-[0.8rem] text-muted">
+                {[selected.kind, selected.addr].filter(Boolean).join(" · ")}
+              </p>
+            )}
+            {selected.days && <p className="mt-0.5 text-[0.75rem] text-muted">운영: {selected.days}</p>}
+          </div>
           <button type="button" onClick={() => setSelected(null)} className="mx-auto mt-1.5 block rounded-lg bg-white/95 px-3 py-1 text-[0.75rem] font-bold text-muted shadow">
             닫기
           </button>

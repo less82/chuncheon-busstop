@@ -1,15 +1,19 @@
 "use client";
 
-// 추천 경로 (v5): 최소 시간 경로 2개. 버스가 달라도 정류장 경로가 같으면 하나로 병합(번호 병합 표기)
+// 추천 경로 (v6): 최소 시간 경로 2개. 카드를 탭하면 실시간 안내(/route/live)로 진입
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { recommendJourneys, type Journey, type BusLeg } from "@/lib/journey";
-import { loadJourneyState } from "@/lib/journeyStore";
+import { recommendJourneys, type Journey, type BusLeg, type Place } from "@/lib/journey";
+import { loadJourneyState, saveJourneyState } from "@/lib/journeyStore";
 import FacilityChips from "./FacilityChips";
 
-function JourneyCard({ j, rank }: { j: Journey; rank: number }) {
+function JourneyCard({ j, rank, onSelect }: { j: Journey; rank: number; onSelect: () => void }) {
   return (
-    <div className={`rounded-2xl border-2 p-4 ${rank === 1 ? "border-primary bg-primary-soft" : "border-line bg-white"}`}>
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`w-full rounded-2xl border-2 p-4 text-left active:opacity-80 ${rank === 1 ? "border-primary bg-primary-soft" : "border-line bg-white"}`}
+    >
       <div className="flex items-baseline justify-between">
         <p className="text-[1.25rem] font-black">
           {rank === 1 && <span className="mr-1.5 rounded-md bg-primary px-1.5 py-0.5 text-[0.75rem] text-white">추천</span>}
@@ -44,13 +48,15 @@ function JourneyCard({ j, rank }: { j: Journey; rank: number }) {
           ),
         )}
       </div>
-    </div>
+
+      <p className="mt-2.5 text-right text-[0.85rem] font-bold text-primary">이 경로로 안내 →</p>
+    </button>
   );
 }
 
 export default function JourneyResults() {
   const router = useRouter();
-  const [state, setState] = useState<{ originName: string; destName: string } | null>(null);
+  const [state, setState] = useState<{ origin: Place; dest: Place } | null>(null);
   const [journeys, setJourneys] = useState<Journey[] | null>(null);
 
   useEffect(() => {
@@ -59,20 +65,27 @@ export default function JourneyResults() {
       router.replace("/route");
       return;
     }
-    setState({ originName: s.origin.name, destName: s.dest.name });
+    setState({ origin: s.origin, dest: s.dest });
     // 계산이 무겁지 않지만(수십 ms) 첫 페인트 후 실행
     const t = setTimeout(() => setJourneys(recommendJourneys(s.origin, s.dest)), 0);
     return () => clearTimeout(t);
   }, [router]);
+
+  // 경로 선택 → 상태 저장 후 실시간 안내로
+  const select = (j: Journey) => {
+    if (!state) return;
+    saveJourneyState({ origin: state.origin, dest: state.dest, candidates: journeys ?? [], selectedId: j.id });
+    router.push("/route/live");
+  };
 
   if (!state) return null;
 
   return (
     <div className="mt-4">
       <p className="rounded-2xl bg-white px-4 py-3 text-[0.9rem] ring-1 ring-line">
-        <span className="font-bold">{state.originName}</span>
+        <span className="font-bold">{state.origin.name}</span>
         <span className="text-muted"> → </span>
-        <span className="font-bold">{state.destName}</span>
+        <span className="font-bold">{state.dest.name}</span>
       </p>
 
       {journeys === null ? (
@@ -86,10 +99,10 @@ export default function JourneyResults() {
       ) : (
         <div className="mt-4 flex flex-col gap-3">
           {journeys.map((j, i) => (
-            <JourneyCard key={j.id} j={j} rank={i + 1} />
+            <JourneyCard key={j.id} j={j} rank={i + 1} onSelect={() => select(j)} />
           ))}
           <p className="text-center text-[0.7rem] text-muted">
-            예상 시간은 도보·정차 기준 추정값이에요
+            경로를 누르면 실시간 안내가 시작돼요 · 예상 시간은 도보·정차 기준 추정값이에요
           </p>
         </div>
       )}

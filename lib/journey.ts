@@ -73,9 +73,9 @@ export interface JourneyState {
 }
 
 const WALK_SPEED = 67; // m/분
-const FIRST_WAIT = 6; // 첫차 대기 가정(분)
-const PER_STOP = 2; // 정류장당 소요 가정(분)
-const TRANSFER_WAIT = 8; // 환승 대기 가정(분)
+export const FIRST_WAIT = 6; // 첫차 대기 가정(분)
+export const PER_STOP = 2; // 정류장당 소요 가정(분)
+export const TRANSFER_WAIT = 8; // 환승 대기 가정(분)
 
 function nearStops(p: Place, radius = 600, top = 4): (SlimStop & { walkMin: number })[] {
   return ALL.map((s) => ({ ...s, d: distanceM(p.lat, p.lng, s.lat, s.lng) }))

@@ -1,14 +1,7 @@
-import AppHeader from "@/components/AppHeader";
-import JourneyResults from "@/components/JourneyResults";
+import { redirect } from "next/navigation";
 
-// 추천 경로 페이지 (v5): 최소 시간 2개
+// v7: 추천 경로 페이지 폐지 — 가는 길 찾기(/route) 안에서 추천 카드 1개로 대체.
+// 기존 세션의 홈 스택이 이 경로를 가리킬 수 있어 리다이렉트만 남긴다.
 export default function RouteResultsPage() {
-  return (
-    <>
-      <AppHeader title="추천 경로" />
-      <main className="px-5 pb-8 pt-4">
-        <JourneyResults />
-      </main>
-    </>
-  );
+  redirect("/route");
 }

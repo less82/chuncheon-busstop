@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import type { Place } from "@/lib/journey";
 import { loadJourneyState, saveJourneyState } from "@/lib/journeyStore";
 import { useKakaoReady } from "@/lib/useKakao";
-import PlaceSearch from "./PlaceSearch";
+import PlaceSearchModal from "./PlaceSearch";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Picking = "origin" | "dest" | null;
@@ -62,37 +62,42 @@ export default function JourneyFinder() {
 
   return (
     <div className="mt-5 flex flex-col gap-3">
-      {picking === "origin" ? (
-        <PlaceSearch label="출발" onPick={(p) => { setOrigin(p); setPicking(null); }} />
-      ) : (
-        <button
-          type="button"
-          onClick={() => setPicking("origin")}
-          className="rounded-2xl border-2 border-line bg-white p-4 text-left active:bg-primary-soft"
-        >
-          <p className="text-[0.8rem] font-bold text-muted">출발</p>
-          <p className="mt-0.5 text-[1.05rem] font-bold">
-            {origin ? origin.name : <span className="text-muted">주소를 찾는 중…</span>}
-            <span className="ml-2 text-[0.85rem] font-bold text-primary">변경</span>
-          </p>
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={() => setPicking("origin")}
+        className="rounded-2xl border-2 border-line bg-white p-4 text-left active:bg-primary-soft"
+      >
+        <p className="text-[0.8rem] font-bold text-muted">출발</p>
+        <p className="mt-0.5 text-[1.05rem] font-bold">
+          {origin ? origin.name : <span className="text-muted">주소를 찾는 중…</span>}
+          <span className="ml-2 text-[0.85rem] font-bold text-primary">변경</span>
+        </p>
+      </button>
 
-      {picking === "dest" ? (
-        <PlaceSearch label="도착" onPick={(p) => { setDest(p); setPicking(null); }} />
-      ) : (
-        <button
-          type="button"
-          onClick={() => setPicking("dest")}
-          className="rounded-2xl border-2 border-line bg-white p-4 text-left active:bg-primary-soft"
-        >
-          <p className="text-[0.8rem] font-bold text-muted">도착</p>
-          <p className="mt-0.5 text-[1.05rem] font-bold">
-            {dest ? dest.name : <span className="text-muted">어디로 가세요?</span>}
-            {dest && <span className="ml-2 text-[0.85rem] font-bold text-primary">변경</span>}
-          </p>
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={() => setPicking("dest")}
+        className="rounded-2xl border-2 border-line bg-white p-4 text-left active:bg-primary-soft"
+      >
+        <p className="text-[0.8rem] font-bold text-muted">도착</p>
+        <p className="mt-0.5 text-[1.05rem] font-bold">
+          {dest ? dest.name : <span className="text-muted">어디로 가세요?</span>}
+          {dest && <span className="ml-2 text-[0.85rem] font-bold text-primary">변경</span>}
+        </p>
+      </button>
+
+      <PlaceSearchModal
+        label="출발"
+        open={picking === "origin"}
+        onPick={(p) => { setOrigin(p); setPicking(null); }}
+        onClose={() => setPicking(null)}
+      />
+      <PlaceSearchModal
+        label="도착"
+        open={picking === "dest"}
+        onPick={(p) => { setDest(p); setPicking(null); }}
+        onClose={() => setPicking(null)}
+      />
 
       <button
         type="button"

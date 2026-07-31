@@ -17,7 +17,7 @@ import FacilityChips from "./FacilityChips";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-// 배지를 줄이려고 역할은 '단어 색'으로만 구분한다 (배지는 버스 번호 하나만)
+// 역할 = 흰 배경 배지(글자만 색), 버스 번호 = 배경 없이 키컬러 텍스트
 const ROLE_STYLE: Record<Role, string> = {
   출발: "text-muted",
   승차: "text-primary",
@@ -25,6 +25,11 @@ const ROLE_STYLE: Record<Role, string> = {
   하차: "text-ink",
   도착: "text-[#2b8a3e]",
 };
+const roleBadge = (role: Role) => (
+  <span className={`shrink-0 rounded-md bg-white px-2 py-0.5 text-[0.75rem] font-black ring-1 ring-line ${ROLE_STYLE[role]}`}>
+    {role}
+  </span>
+);
 
 type ArrState = Record<string, { ok: boolean; list: Arrival[] }>;
 
@@ -243,13 +248,13 @@ export default function JourneyLive() {
                               : `border-line bg-white ${passed ? "opacity-60" : ""}`
                         }`}
                       >
-                        <div className="flex items-baseline gap-1.5">
-                          <span className={`shrink-0 text-[0.8rem] font-black ${ROLE_STYLE[n.role]}`}>{n.role}</span>
+                        <div className="flex items-center gap-1.5">
+                          {roleBadge(n.role)}
                           <span className="truncate text-[0.9rem] font-bold">{n.name}</span>
                         </div>
                         {n.routeNo && (
                           <p className="mt-1 text-[0.8rem]">
-                            {busNo && <span className="rounded bg-primary px-1.5 py-0.5 font-black text-white">{busNo}번</span>}{" "}
+                            {busNo && <span className="text-[0.95rem] font-black text-primary">{busNo}번</span>}{" "}
                             {a === undefined
                               ? "도착 확인 중…"
                               : !a.ok
@@ -257,9 +262,6 @@ export default function JourneyLive() {
                                 : bestBus
                                   ? `${bestBus.minutes}분 후 도착`
                                   : "지금 오는 버스 없음"}
-                            {n.ride !== undefined && (
-                              <span className="ml-1.5 text-[0.72rem] text-muted">· {n.ride}개 정류장 이동</span>
-                            )}
                           </p>
                         )}
                         {n.fac && (
@@ -274,9 +276,23 @@ export default function JourneyLive() {
                         )}
                       </div>
                     ) : (
-                      <div className={`flex items-baseline gap-1.5 rounded-xl px-2.5 py-1.5 ${isCurNode ? "bg-primary-soft" : ""}`}>
-                        <span className={`shrink-0 text-[0.8rem] font-black ${ROLE_STYLE[n.role]}`}>{n.role}</span>
+                      <div className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 ${isCurNode ? "bg-primary-soft" : ""}`}>
+                        {roleBadge(n.role)}
                         <span className="truncate text-[0.9rem] font-bold">{n.name}</span>
+                      </div>
+                    )}
+
+                    {/* 흐름 연결선: 이 정류장에서 다음 정류장까지 무엇을 하는지 */}
+                    {n.ride !== undefined && (
+                      <div className="flex items-center gap-2 py-1 pl-4 text-[0.75rem] font-bold text-muted">
+                        <span className="text-primary">↓</span>
+                        버스 타고 {n.ride}개 정류장 이동
+                      </div>
+                    )}
+                    {n.role === "하차" && (
+                      <div className="flex items-center gap-2 py-1 pl-4 text-[0.75rem] font-bold text-muted">
+                        <span className="text-primary">↓</span>
+                        내려서 걸어가기
                       </div>
                     )}
                   </div>
@@ -285,8 +301,10 @@ export default function JourneyLive() {
                   {riding && (
                     <div>
                       <div className="rounded-xl border-2 border-primary bg-primary-soft p-2.5">
-                        <div className="flex items-baseline gap-1.5">
-                          <span className="shrink-0 text-[0.8rem] font-black text-primary">버스 이동 중</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="shrink-0 rounded-md bg-white px-2 py-0.5 text-[0.75rem] font-black text-primary ring-1 ring-line">
+                            버스 안
+                          </span>
                           <span className="truncate text-[0.9rem] font-bold">{riding.name}</span>
                         </div>
                         <p className="mt-1 text-[0.78rem] text-muted">

@@ -17,12 +17,13 @@ import FacilityChips from "./FacilityChips";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+// 배지를 줄이려고 역할은 '단어 색'으로만 구분한다 (배지는 버스 번호 하나만)
 const ROLE_STYLE: Record<Role, string> = {
-  출발: "bg-white text-muted ring-1 ring-line",
-  승차: "bg-primary text-white",
-  환승: "bg-warn text-white",
-  하차: "bg-ink text-white",
-  도착: "bg-white text-muted ring-1 ring-line",
+  출발: "text-muted",
+  승차: "text-primary",
+  환승: "text-warn",
+  하차: "text-ink",
+  도착: "text-[#2b8a3e]",
 };
 
 type ArrState = Record<string, { ok: boolean; list: Arrival[] }>;
@@ -182,27 +183,6 @@ export default function JourneyLive() {
   const curIdx = curIdxCalc;
   const cur = curIdx === null ? null : positions[curIdx];
 
-  const curBadge = (
-    <span className="ml-auto shrink-0 rounded-md bg-primary px-1.5 py-0.5 text-[0.65rem] font-bold text-white">
-      지금 여기
-    </span>
-  );
-  const railDot = (state: "cur" | "passed" | "todo") => (
-    <>
-      {state === "cur" && (
-        <span
-          className="absolute -left-[21px] top-3 h-[14px] w-[14px] rounded-full"
-          style={{ background: "rgba(0,79,158,.35)", animation: "locpulse 2s ease-out infinite" }}
-        />
-      )}
-      <span
-        className={`absolute -left-[21px] top-3 h-[14px] w-[14px] rounded-full border-2 border-white shadow ${
-          state === "cur" ? "bg-primary" : state === "passed" ? "bg-primary/60" : "bg-gray-300"
-        }`}
-      />
-    </>
-  );
-
   return (
     <div className="flex h-full flex-col">
       {/* 상단 지도 (화면 절반) — 경로선·정류장 점·현재 위치 */}
@@ -229,10 +209,9 @@ export default function JourneyLive() {
         </div>
       )}
 
-      {/* 진행 레일 타임라인 */}
+      {/* 타임라인 (레일·점 없음 — 현재 위치는 카드 강조로만 표시) */}
       <div className="no-scrollbar mt-2 min-h-0 flex-1 overflow-y-auto">
-        <div className="relative pl-6">
-          <span className="absolute bottom-5 left-[8px] top-5 w-[3px] rounded bg-line" />
+        <div>
           <div className="flex flex-col gap-2">
             {nodes.map((n, i) => {
               const isCurNode = cur?.kind === "node" && cur.nodeIdx === i;
@@ -246,16 +225,12 @@ export default function JourneyLive() {
               const busNo = bestBus ? bestBus.routeNo : n.routeNo?.split("·")[0];
               return (
                 <div key={i} className="contents">
-                  <div className="relative">
-                    {railDot(isCurNode ? "cur" : passed ? "passed" : "todo")}
+                  <div>
                     {isStopNode ? (
-                      <div className={`rounded-xl border-2 bg-white p-2.5 ${isCurNode ? "border-primary ring-2 ring-primary/30" : "border-line"}`}>
-                        <div className="flex items-center gap-1.5">
-                          <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[0.7rem] font-black ${ROLE_STYLE[n.role]}`}>
-                            {n.role}
-                          </span>
+                      <div className={`rounded-xl border-2 p-2.5 ${isCurNode ? "border-primary bg-primary-soft" : `border-line bg-white ${passed ? "opacity-60" : ""}`}`}>
+                        <div className="flex items-baseline gap-1.5">
+                          <span className={`shrink-0 text-[0.8rem] font-black ${ROLE_STYLE[n.role]}`}>{n.role}</span>
                           <span className="truncate text-[0.9rem] font-bold">{n.name}</span>
-                          {isCurNode && curBadge}
                         </div>
                         {n.routeNo && (
                           <p className="mt-1 text-[0.8rem]">
@@ -284,27 +259,20 @@ export default function JourneyLive() {
                         )}
                       </div>
                     ) : (
-                      <div className={`flex items-center gap-1.5 rounded-xl px-1.5 py-1.5 ${isCurNode ? "bg-primary-soft ring-2 ring-primary/40" : ""}`}>
-                        <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[0.7rem] font-black ${ROLE_STYLE[n.role]}`}>
-                          {n.role}
-                        </span>
+                      <div className={`flex items-baseline gap-1.5 rounded-xl px-2.5 py-1.5 ${isCurNode ? "bg-primary-soft" : ""}`}>
+                        <span className={`shrink-0 text-[0.8rem] font-black ${ROLE_STYLE[n.role]}`}>{n.role}</span>
                         <span className="truncate text-[0.9rem] font-bold">{n.name}</span>
-                        {isCurNode && curBadge}
                       </div>
                     )}
                   </div>
 
                   {/* 버스 이동 중 — 승차/환승 박스와 다음 박스 사이에 현재 정류장이 실시간으로 끼어듦 */}
                   {riding && (
-                    <div className="relative">
-                      {railDot("cur")}
-                      <div className="rounded-xl border-2 border-primary bg-primary-soft p-2.5 ring-2 ring-primary/30">
-                        <div className="flex items-center gap-1.5">
-                          <span className="shrink-0 rounded-md bg-primary px-1.5 py-0.5 text-[0.7rem] font-black text-white">
-                            버스 이동 중
-                          </span>
+                    <div>
+                      <div className="rounded-xl border-2 border-primary bg-primary-soft p-2.5">
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="shrink-0 text-[0.8rem] font-black text-primary">버스 이동 중</span>
                           <span className="truncate text-[0.9rem] font-bold">{riding.name}</span>
-                          {curBadge}
                         </div>
                         <p className="mt-1 text-[0.78rem] text-muted">
                           <span className="font-bold text-ink">{riding.alightName}</span> 하차까지{" "}

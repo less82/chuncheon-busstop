@@ -249,63 +249,56 @@ export default function JourneyLive() {
               return (
                 <div key={i} className="contents">
                   <div>
-                    {isStopNode ? (
-                      <div
-                        onClick={() => setFocusNode((v) => (v === i ? null : i))}
-                        // 두 상태를 다른 축으로 구분: 현재 위치=파란 채움(테두리 없음), 탭해서 보는 중=파란 테두리
-                        className={`rounded-xl border-2 p-2 ${
-                          focusNode === i
-                            ? "border-primary bg-white"
-                            : isCurNode
-                              ? "border-transparent bg-primary-soft"
-                              : `border-line bg-white ${passed ? "opacity-60" : ""}`
-                        }`}
-                      >
-                        <div className="flex items-center gap-1.5">
-                          {roleBadge(n.role)}
-                          <span className="truncate text-[0.9rem] font-bold">{n.name}</span>
-                        </div>
-                        {n.routeNo && (
-                          <p className="mt-1 text-[0.8rem]">
-                            {busNo && <span className="text-[0.95rem] font-black text-primary">{busNo}번</span>}{" "}
-                            {a === undefined
-                              ? "도착 확인 중…"
-                              : !a.ok
-                                ? "도착 정보를 못 불러왔어요"
-                                : bestBus
-                                  ? `${bestBus.minutes}분 후 도착`
-                                  : "지금 오는 버스 없음"}
-                          </p>
-                        )}
-                        {n.fac && (
-                          <div className="mt-1">
-                            <FacilityChips fac={n.fac} oneLine />
-                          </div>
-                        )}
-                        {n.shelter && (
-                          <p className="mt-1 text-[0.72rem] font-bold text-[#2b8a3e]">
-                            무더위쉼터 {n.shelter.name} · {formatDistance(n.shelter.dist)}
-                          </p>
-                        )}
-                      </div>
-                    ) : (
-                      <div className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 ${isCurNode ? "bg-primary-soft" : ""}`}>
+                    {/* 모든 지점을 같은 카드 형태로 — 흐름이 카드→연결문구→카드로 읽힌다 */}
+                    <div
+                      onClick={() => setFocusNode((v) => (v === i ? null : i))}
+                      // 두 상태를 다른 축으로 구분: 현재 위치=파란 채움, 탭해서 보는 중=파란 테두리
+                      className={`rounded-2xl border-2 px-3 py-2 ${
+                        focusNode === i
+                          ? "border-primary bg-white shadow-sm"
+                          : isCurNode
+                            ? "border-transparent bg-primary-soft"
+                            : `border-line bg-white ${passed ? "opacity-60" : ""}`
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
                         {roleBadge(n.role)}
-                        <span className="truncate text-[0.9rem] font-bold">{n.name}</span>
+                        <span className="truncate text-[0.95rem] font-bold">{n.name}</span>
                       </div>
-                    )}
+                      {n.routeNo && (
+                        <p className="mt-1.5 text-[0.8rem]">
+                          {busNo && <span className="text-[1rem] font-black text-primary">{busNo}번</span>}{" "}
+                          {a === undefined
+                            ? "도착 확인 중…"
+                            : !a.ok
+                              ? "도착 정보를 못 불러왔어요"
+                              : bestBus
+                                ? `${bestBus.minutes}분 후 도착`
+                                : "지금 오는 버스 없음"}
+                        </p>
+                      )}
+                      {n.fac && (
+                        <div className="mt-1.5">
+                          <FacilityChips fac={n.fac} oneLine />
+                        </div>
+                      )}
+                      {n.shelter && (
+                        <p className="mt-1.5 flex items-center gap-1.5 text-[0.75rem] font-bold text-[#2b8a3e]">
+                          <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-[#2b8a3e]" />
+                          <span className="truncate">
+                            무더위쉼터 {n.shelter.name} · {formatDistance(n.shelter.dist)}
+                          </span>
+                        </p>
+                      )}
+                    </div>
 
-                    {/* 흐름 연결선: 이 정류장에서 다음 정류장까지 무엇을 하는지 */}
-                    {n.ride !== undefined && (
-                      <div className="flex items-center gap-2 py-1 pl-4 text-[0.75rem] font-bold text-muted">
-                        <span className="text-primary">↓</span>
-                        버스 타고 {n.ride}개 정류장 이동
-                      </div>
-                    )}
-                    {n.role === "하차" && (
-                      <div className="flex items-center gap-2 py-1 pl-4 text-[0.75rem] font-bold text-muted">
-                        <span className="text-primary">↓</span>
-                        내려서 걸어가기
+                    {/* 흐름 연결: 카드 사이를 세로선 + 문구로 잇는다 */}
+                    {(n.ride !== undefined || n.role === "하차") && (
+                      <div className="flex items-center gap-2 pl-5">
+                        <span className="h-6 w-[2px] shrink-0 rounded bg-line" />
+                        <span className="py-0.5 text-[0.75rem] font-bold text-muted">
+                          {n.ride !== undefined ? `버스 타고 ${n.ride}개 정류장` : "내려서 걸어가기"}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -313,17 +306,20 @@ export default function JourneyLive() {
                   {/* 버스 이동 중 — 승차/환승 박스와 다음 박스 사이에 현재 정류장이 실시간으로 끼어듦 */}
                   {riding && (
                     <div>
-                      <div className="rounded-xl border-2 border-transparent bg-primary-soft p-2.5">
-                        <div className="flex items-center gap-1.5">
+                      <div className="rounded-2xl border-2 border-transparent bg-primary-soft px-3 py-2">
+                        <div className="flex items-center gap-2">
                           <span className="shrink-0 rounded-md bg-white px-2 py-0.5 text-[0.75rem] font-black text-primary ring-1 ring-line">
                             버스 안
                           </span>
-                          <span className="truncate text-[0.9rem] font-bold">{riding.name}</span>
+                          <span className="truncate text-[0.95rem] font-bold">{riding.name}</span>
                         </div>
-                        <p className="mt-1 text-[0.78rem] text-muted">
+                        <p className="mt-1.5 text-[0.78rem] text-muted">
                           <span className="font-bold text-ink">{riding.alightName}</span> 하차까지{" "}
                           <span className="font-bold text-primary">{riding.stopsLeft}개 정류장</span>
                         </p>
+                      </div>
+                      <div className="flex items-center gap-2 pl-5">
+                        <span className="h-6 w-[2px] shrink-0 rounded bg-line" />
                       </div>
                     </div>
                   )}

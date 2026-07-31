@@ -98,7 +98,17 @@ export function buildNodes(j: Journey, dest: Place): FlowNode[] {
     nodes.push(stopNode("하차", prevBus.alightId, prevBus.alightName));
     nodes[nodes.length - 1].outMin = pendingWalk;
   }
-  nodes.push({ role: "도착", name: dest.name, lat: dest.lat, lng: dest.lng, waitMin: 0, outMin: 0, remMin: 0 });
+  // 도착지에도 50m 안에 쉼터가 있을 수 있다 (더울 때 잠깐 들를 곳)
+  nodes.push({
+    role: "도착",
+    name: dest.name,
+    lat: dest.lat,
+    lng: dest.lng,
+    waitMin: 0,
+    outMin: 0,
+    shelter: nearestShelter(dest.lat, dest.lng),
+    remMin: 0,
+  });
 
   let rem = 0;
   for (let i = nodes.length - 1; i >= 0; i--) {

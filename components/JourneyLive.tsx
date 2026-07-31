@@ -99,32 +99,28 @@ export default function JourneyLive() {
     return () => navigator.geolocation.clearWatch(id);
   }, [positions, demo]);
 
-  // 상단 지도: 경로 폴리라인 + 정류장 점 (한 번 생성, 경로 전체가 보이게)
+  // 상단 지도: 경로 폴리라인 + 정류장 점. 축척은 내 위치 기준 50m(레벨 3) 고정
   const [mapReady, setMapReady] = useState(false);
   useEffect(() => {
     if (!kakaoReady || !nodes || !data || !mapBoxRef.current || mapRef.current) return;
     const kakao = window.kakao;
     const map = new kakao.maps.Map(mapBoxRef.current, {
       center: new kakao.maps.LatLng(nodes[0].lat, nodes[0].lng),
-      level: 5,
+      level: 3, // 축척 50m — 지도 탭과 동일 기준
     });
     mapRef.current = map;
-    const bounds = new kakao.maps.LatLngBounds();
     for (const leg of data.j.legs) {
       if (leg.kind !== "bus") continue;
       const path = (leg as BusLeg).path.map(([la, ln]) => new kakao.maps.LatLng(la, ln));
-      path.forEach((p) => bounds.extend(p));
       new kakao.maps.Polyline({ map, path, strokeWeight: 5, strokeColor: "#004f9e", strokeOpacity: 0.75 });
     }
     const dotColor: Record<string, string> = { 승차: "#004f9e", 환승: "#d9480f", 하차: "#17202b", 도착: "#2b8a3e" };
     for (const n of nodes) {
-      bounds.extend(new kakao.maps.LatLng(n.lat, n.lng));
       const el = document.createElement("div");
       el.style.cssText = `width:14px;height:14px;border-radius:50%;background:${dotColor[n.role] ?? "#9aa4af"};border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);`;
       el.title = n.name;
       new kakao.maps.CustomOverlay({ map, position: new kakao.maps.LatLng(n.lat, n.lng), content: el, yAnchor: 0.5 });
     }
-    map.setBounds(bounds);
     setMapReady(true);
   }, [kakaoReady, nodes, data]);
 
@@ -146,6 +142,9 @@ export default function JourneyLive() {
     } else {
       curOvRef.current.setPosition(pos);
     }
+    // 내 위치 중심·축척 50m 유지 — 이동하면 지도가 따라온다
+    mapRef.current.setCenter(pos);
+    mapRef.current.setLevel(3);
   }, [mapReady, curIdxCalc, positions]);
 
   if (!data || !nodes || !positions) return null;

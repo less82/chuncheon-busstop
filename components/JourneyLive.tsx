@@ -114,6 +114,23 @@ export default function JourneyLive() {
       const path = (leg as BusLeg).path.map(([la, ln]) => new kakao.maps.LatLng(la, ln));
       new kakao.maps.Polyline({ map, path, strokeWeight: 5, strokeColor: "#004f9e", strokeOpacity: 0.75 });
     }
+    // 추천된 무더위쉼터(각 정류장 50m 이내)를 초록 핀으로 — 타임라인에 뜬 곳과 같은 곳
+    const seen = new Set<string>();
+    for (const n of nodes) {
+      const sh = n.shelter;
+      if (!sh || seen.has(sh.name)) continue;
+      seen.add(sh.name);
+      const el = document.createElement("div");
+      el.title = sh.name;
+      el.style.cssText = "width:26px;height:33px;";
+      el.innerHTML =
+        '<svg width="26" height="33" viewBox="0 0 30 38">' +
+        '<path d="M15 37C15 37 3 22.5 3 13a12 12 0 0 1 24 0c0 9.5-12 24-12 24z" fill="#2b8a3e" stroke="#fff" stroke-width="2"/>' +
+        '<circle cx="15" cy="13" r="4.5" fill="#fff"/>' +
+        "</svg>";
+      new kakao.maps.CustomOverlay({ map, position: new kakao.maps.LatLng(sh.lat, sh.lng), content: el, yAnchor: 1, zIndex: 4 });
+    }
+
     const dotColor: Record<string, string> = { 승차: "#004f9e", 환승: "#d9480f", 하차: "#17202b", 도착: "#2b8a3e" };
     let departMarked = false;
     for (const n of nodes) {
@@ -189,7 +206,7 @@ export default function JourneyLive() {
   return (
     <div className="flex h-full flex-col">
       {/* 상단 지도 (화면 절반) — 경로선·정류장 점·현재 위치 */}
-      <div ref={mapBoxRef} className="h-[42%] w-full shrink-0 overflow-hidden rounded-2xl border border-line bg-white" />
+      <div ref={mapBoxRef} className="h-[30%] w-full shrink-0 overflow-hidden rounded-2xl border border-line bg-white" />
 
       {/* 시연 모드: GPS 대신 버튼으로 현재 위치 이동 (경유 정류장 단위) */}
       {demo && (
@@ -213,7 +230,7 @@ export default function JourneyLive() {
       )}
 
       {/* 진행 레일 타임라인 */}
-      <div className="mt-2 min-h-0 flex-1 overflow-y-auto">
+      <div className="no-scrollbar mt-2 min-h-0 flex-1 overflow-y-auto">
         <div className="relative pl-6">
           <span className="absolute bottom-5 left-[8px] top-5 w-[3px] rounded bg-line" />
           <div className="flex flex-col gap-2">

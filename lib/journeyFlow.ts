@@ -23,7 +23,7 @@ export interface FlowNode {
   ride?: number; // 이 정류장에서 타고 갈 정류장 수
   waitMin: number; // 이 노드에서의 대기 가정
   outMin: number; // 다음 노드까지 이동 시간(남은 시간 계산용)
-  shelter?: { name: string; dist: number };
+  shelter?: { name: string; lat: number; lng: number; dist: number };
   remMin: number; // 이 노드부터 도착까지 예상(분)
 }
 
@@ -39,14 +39,18 @@ export interface FlowPos {
   alightName?: string;
 }
 
-function nearestShelter(lat: number, lng: number): { name: string; dist: number } | undefined {
+// 안내 화면 지도는 축척 50m — 그 안에 들어오는 쉼터만 "여기서 쉴 수 있다"고 말할 수 있다
+export const SHELTER_NEAR_M = 50;
+
+function nearestShelter(lat: number, lng: number): { name: string; lat: number; lng: number; dist: number } | undefined {
   let best: Shelter | null = null;
   let bd = Infinity;
   for (const sh of SHELTERS) {
     const d = distanceM(lat, lng, sh.lat, sh.lng);
     if (d < bd) { bd = d; best = sh; }
   }
-  return best ? { name: best.name, dist: bd } : undefined;
+  if (!best || bd > SHELTER_NEAR_M) return undefined;
+  return { name: best.name, lat: best.lat, lng: best.lng, dist: bd };
 }
 
 function stopNode(role: Role, stopId: string, fallbackName: string, routeNo?: string, waitMin = 0, ride?: number): FlowNode {

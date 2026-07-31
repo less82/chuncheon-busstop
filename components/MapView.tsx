@@ -42,18 +42,19 @@ function isOpenNow(sh: Shelter, now: Date): boolean {
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-// 쉼터 핀: 글씨 없이 초록 핀 + 흰 원. 선택되면 크고 진한 핀으로 구분
+// 쉼터 핀: 글씨 없이 초록 핀 + 흰 원. 선택되면 색은 그대로 두고 크기만 커진다.
+// 바깥 상자를 고정 크기(하단 정렬)로 두어 커질 때 위쪽으로만 자란다 — 좌표는 항상 핀 끝에 고정
 function pinSvg(selected: boolean): string {
-  const w = selected ? 40 : 30;
-  const h = selected ? 50 : 38;
-  const fill = selected ? "#155d28" : "#2b8a3e";
+  const w = selected ? 42 : 30;
+  const h = selected ? 53 : 38;
   return (
     `<svg width="${w}" height="${h}" viewBox="0 0 30 38">` +
-    `<path d="M15 37C15 37 3 22.5 3 13a12 12 0 0 1 24 0c0 9.5-12 24-12 24z" fill="${fill}" stroke="#fff" stroke-width="2"/>` +
+    '<path d="M15 37C15 37 3 22.5 3 13a12 12 0 0 1 24 0c0 9.5-12 24-12 24z" fill="#2b8a3e" stroke="#fff" stroke-width="2"/>' +
     '<circle cx="15" cy="13" r="4.5" fill="#fff"/>' +
     "</svg>"
   );
 }
+const PIN_BOX = "width:42px;height:53px;padding:0;border:0;background:none;cursor:pointer;display:flex;align-items:flex-end;justify-content:center;";
 
 export default function MapView() {
   const params = useSearchParams();
@@ -113,7 +114,7 @@ export default function MapView() {
     for (const sh of SHELTERS) {
       const el = document.createElement("button");
       el.title = sh.name;
-      el.style.cssText = "width:30px;height:38px;padding:0;border:0;background:none;cursor:pointer;";
+      el.style.cssText = PIN_BOX;
       el.innerHTML = pinSvg(false);
       el.onclick = () => {
         const my = myPosRef.current;
@@ -167,9 +168,8 @@ export default function MapView() {
     for (const p of pinRefs.current) {
       const isSel =
         !!selShelter && p.sh.lat === selShelter.lat && p.sh.lng === selShelter.lng && p.sh.name === selShelter.name;
-      p.el.style.width = isSel ? "40px" : "30px";
-      p.el.style.height = isSel ? "50px" : "38px";
-      p.el.innerHTML = pinSvg(isSel);
+      p.el.innerHTML = pinSvg(isSel); // 상자 크기는 고정 — 핀만 위로 커진다
+      p.el.style.zIndex = isSel ? "8" : "1";
       p.ov.setZIndex(isSel ? 8 : 1);
     }
   }, [selShelter]);

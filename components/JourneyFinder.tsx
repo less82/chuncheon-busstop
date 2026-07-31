@@ -117,13 +117,8 @@ export default function JourneyFinder() {
         <button
           type="button"
           onClick={resetAll}
-          className="flex min-h-11 items-center gap-1.5 rounded-xl border-2 border-line bg-white px-3 text-[0.85rem] font-bold text-muted active:bg-primary-soft"
+          className="min-h-11 rounded-xl border-2 border-line bg-white px-3 text-[0.85rem] font-bold text-muted active:bg-primary-soft"
         >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21" />
-            <path d="M22 21H7" />
-            <path d="m5 11 9 9" />
-          </svg>
           다시 입력
         </button>
       </div>
@@ -192,9 +187,18 @@ export default function JourneyFinder() {
           className="mt-1 rounded-2xl border-2 border-primary bg-white p-4 text-left active:bg-primary-soft"
         >
           <div className="flex flex-col gap-2.5">
-            {journey.legs.map((l, i) =>
-              l.kind === "walk" ? null : (
+            {journey.legs.map((l, i) => {
+              if (l.kind === "walk") return null;
+              // 두 번째 버스부터는 환승 표시 — 별개 추천처럼 보이지 않게
+              const isTransfer = journey.legs.slice(0, i).some((x) => x.kind === "bus");
+              return (
                 <div key={i}>
+                  {isTransfer && (
+                    <p className="mb-1.5 flex items-center gap-1.5 text-[0.85rem] font-bold text-warn">
+                      <span className="rounded-md bg-warn px-1.5 py-0.5 text-[0.7rem] font-black text-white">환승</span>
+                      {(l as BusLeg).boardName}에서 갈아타세요
+                    </p>
+                  )}
                   <p className="text-[0.95rem]">
                     <span className="rounded-md bg-primary px-2 py-0.5 font-black text-white">
                       {(best[i] ? best[i]!.routeNo : (l as BusLeg).routeNo.split("·")[0])}번
@@ -213,8 +217,8 @@ export default function JourneyFinder() {
                     <span className="font-bold">{(l as BusLeg).alightName}</span>
                   </p>
                 </div>
-              ),
-            )}
+              );
+            })}
           </div>
         </button>
       )}

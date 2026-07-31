@@ -69,18 +69,17 @@ function stopNode(role: Role, stopId: string, fallbackName: string, routeNo?: st
   };
 }
 
-// 경로 → 타임라인 노드. 남은 시간은 도착지부터 역방향 누적(도보·대기 포함)
-export function buildNodes(j: Journey, origin: Place, dest: Place): FlowNode[] {
-  const nodes: FlowNode[] = [
-    { role: "출발", name: origin.name, lat: origin.lat, lng: origin.lng, waitMin: 0, outMin: 0, remMin: 0 },
-  ];
+// 경로 → 타임라인 노드 (v7.1: 출발 주소 노드 없음 — 첫 항목이 승차 정류장).
+// 남은 시간은 도착지부터 역방향 누적(도보·대기 포함)
+export function buildNodes(j: Journey, dest: Place): FlowNode[] {
+  const nodes: FlowNode[] = [];
   let pendingWalk = 0;
   let prevBus: BusLeg | null = null;
 
   for (const leg of j.legs) {
     if (leg.kind === "walk") { pendingWalk += leg.minutes; continue; }
     const prev = nodes[nodes.length - 1];
-    prev.outMin = prevBus === null ? pendingWalk : pathMinutes(prevBus.path) + pendingWalk;
+    if (prev) prev.outMin = pathMinutes(prevBus!.path) + pendingWalk;
     nodes.push(
       stopNode(prevBus === null ? "승차" : "환승", leg.boardId, leg.boardName, leg.routeNo,
         prevBus === null ? FIRST_WAIT : TRANSFER_WAIT, leg.rideStops),

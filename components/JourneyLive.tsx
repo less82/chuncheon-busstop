@@ -41,7 +41,7 @@ export default function JourneyLive() {
   }, [router]);
 
   const nodes = useMemo(
-    () => (data ? buildNodes(data.j, data.origin, data.dest) : null),
+    () => (data ? buildNodes(data.j, data.dest) : null),
     [data],
   );
   const positions = useMemo(
@@ -119,14 +119,6 @@ export default function JourneyLive() {
 
   return (
     <div className="flex h-full flex-col">
-      {/* 경로 헤더 */}
-      <div className="rounded-2xl bg-primary px-4 py-2.5 text-white">
-        <p className="truncate text-[0.95rem] font-bold">
-          {data.origin.name} → {data.dest.name}
-          {!demo && cur === null && <span className="font-normal opacity-80"> · 내 위치 확인 중</span>}
-        </p>
-      </div>
-
       {/* 시연 모드: GPS 대신 버튼으로 현재 위치 이동 (경유 정류장 단위) */}
       {demo && (
         <div className="mt-2 flex items-center gap-2 rounded-xl bg-warn-soft px-3 py-1.5">

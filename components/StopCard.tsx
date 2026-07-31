@@ -25,7 +25,7 @@ export default function StopCard({ stop }: { stop: SlimStop & { dist?: number } 
       </div>
       {noShade && (
         <p className="mt-2 inline-block rounded-lg bg-warn-soft px-2 py-0.5 text-[0.75rem] font-bold text-warn">
-          한낮 더위 주의 — 그늘 없음
+          한낮 더위 주의 — 지붕 없음
         </p>
       )}
     </Link>

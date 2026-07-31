@@ -1,12 +1,12 @@
 // 시설 5종 상태 코드: y=있음, n=없음, u=미확인
 export type FacStatus = "y" | "n" | "u";
 
-// 시설 순서 고정: 그늘, 의자, 쉘터, 도착안내기, 조명 (slim 인덱스의 fac 문자열 순서와 동일)
+// 시설 순서 고정: 지붕(그늘), 의자, 쉘터, 도착안내기, 조명 (slim 인덱스의 fac 문자열 순서와 동일)
 export const FAC_KEYS = ["shade", "seat", "shelter", "sign", "light"] as const;
 export type FacKey = (typeof FAC_KEYS)[number];
 
 export const FAC_LABEL: Record<FacKey, string> = {
-  shade: "그늘",
+  shade: "지붕",
   seat: "의자",
   shelter: "쉘터",
   sign: "안내기",

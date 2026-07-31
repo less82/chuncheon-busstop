@@ -1,10 +1,10 @@
 "use client";
 
-// 실시간 경로 플로우 (v6.2): 왼쪽 진행 레일 + 승차/환승/하차 박스 타임라인.
+// 실시간 경로 플로우 (v6.3): 왼쪽 진행 레일 + 승차/환승/하차 박스 타임라인.
 // - 버스는 '가장 빨리 오는 한 대'만 표시 (TAGO 실시간, 없으면 대표 번호 폴백)
-// - 걷기 시간은 표시하지 않음 (남은 시간 계산에는 포함)
-// - 내 위치(GPS watch)에 따라 레일의 현재 점이 위→아래로 내려감
-// - ?demo=1 : 시연 모드 — GPS 대신 버튼으로 현재 위치를 한 칸씩 이동 (데이터는 전부 실데이터)
+// - 버스 이동 중이면 승차↔하차 박스 사이에 '지금 지나는 정류장' 박스가 실시간으로 끼어듦
+//   (경유 정류장 좌표는 BusLeg.path — 내 위치와 최근접 매칭)
+// - ?demo=1 : 시연 모드 — GPS 대신 버튼으로 경유 정류장 단위 이동 (데이터는 전부 실데이터)
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import slimStops from "@/lib/data/stops.slim.json";
@@ -18,6 +18,7 @@ import FacilityChips from "./FacilityChips";
 
 const ALL = slimStops as SlimStop[];
 const byId = new Map(ALL.map((s) => [s.id, s]));
+const byCoord = new Map(ALL.map((s) => [`${s.lat},${s.lng}`, s.name]));
 const SHELTERS = (sheltersRaw as Shelter[]).filter((s) => s.operating);
 
 type Role = "출발" | "승차" | "환승" | "하차" | "도착";
@@ -35,6 +36,18 @@ interface FlowNode {
   outMin: number; // 다음 노드까지 이동 시간(남은 시간 계산용)
   shelter?: { name: string; dist: number };
   remMin: number; // 이 노드부터 도착까지 예상(분)
+}
+
+// 위치 후보: 타임라인 노드 + 버스 구간의 경유 정류장 (GPS 최근접·시연 스텝이 공유)
+interface FlowPos {
+  kind: "node" | "riding";
+  nodeIdx: number; // node면 해당 노드, riding이면 직전 승차/환승 노드
+  name: string;
+  lat: number;
+  lng: number;
+  remMin: number;
+  stopsLeft?: number; // riding: 하차까지 남은 정류장 수
+  alightName?: string;
 }
 
 function nearestShelter(lat: number, lng: number): { name: string; dist: number } | undefined {
@@ -103,6 +116,36 @@ function buildNodes(j: Journey, origin: Place, dest: Place): FlowNode[] {
   return nodes;
 }
 
+// 노드 + 버스 경유 정류장을 시간 순서대로 펼친 위치 후보 목록
+function buildPositions(nodes: FlowNode[], j: Journey): FlowPos[] {
+  const busLegs = j.legs.filter((l): l is BusLeg => l.kind === "bus");
+  const out: FlowPos[] = [];
+  let k = 0;
+  nodes.forEach((n, i) => {
+    out.push({ kind: "node", nodeIdx: i, name: n.name, lat: n.lat, lng: n.lng, remMin: n.remMin });
+    if (n.role === "승차" || n.role === "환승") {
+      const leg = busLegs[k++];
+      const next = nodes[i + 1];
+      if (!leg || !next) return;
+      const inner = leg.path.slice(1, -1); // 승차·하차 제외한 경유 정류장
+      inner.forEach(([lat, lng], idx) => {
+        const stopsLeft = inner.length - idx; // 여기서 하차까지 남은 정류장 수
+        out.push({
+          kind: "riding",
+          nodeIdx: i,
+          name: byCoord.get(`${lat},${lng}`) ?? "이동 중",
+          lat,
+          lng,
+          remMin: next.remMin + stopsLeft * PER_STOP,
+          stopsLeft,
+          alightName: leg.alightName,
+        });
+      });
+    }
+  });
+  return out;
+}
+
 const ROLE_STYLE: Record<Role, string> = {
   출발: "bg-white text-muted ring-1 ring-line",
   승차: "bg-primary text-white",
@@ -119,7 +162,7 @@ export default function JourneyLive() {
   const demo = params.get("demo") === "1"; // 시연 모드
   const [data, setData] = useState<{ j: Journey; origin: Place; dest: Place } | null>(null);
   const [arr, setArr] = useState<ArrState>({});
-  const [gpsIdx, setGpsIdx] = useState<number | null>(null);
+  const [gpsIdx, setGpsIdx] = useState<number | null>(null); // positions 인덱스
   const [demoIdx, setDemoIdx] = useState(0);
 
   useEffect(() => {
@@ -132,6 +175,10 @@ export default function JourneyLive() {
   const nodes = useMemo(
     () => (data ? buildNodes(data.j, data.origin, data.dest) : null),
     [data],
+  );
+  const positions = useMemo(
+    () => (nodes && data ? buildPositions(nodes, data.j) : null),
+    [nodes, data],
   );
 
   // 승차·환승 정류장 도착정보 (TAGO 실시간, 30초 갱신) — 목업 없음, 실패는 실패로 표시
@@ -158,15 +205,15 @@ export default function JourneyLive() {
     return () => { dead = true; clearInterval(t); };
   }, [nodes]);
 
-  // 내 위치 추적 → 가장 가까운 노드가 '지금 여기' (시연 모드에서는 사용 안 함)
+  // 내 위치 추적 → 노드·경유 정류장 중 가장 가까운 곳이 '지금 여기' (시연 모드에서는 사용 안 함)
   useEffect(() => {
-    if (!nodes || demo || !("geolocation" in navigator)) return;
+    if (!positions || demo || !("geolocation" in navigator)) return;
     const id = navigator.geolocation.watchPosition(
       (pos) => {
         let best = 0;
         let bd = Infinity;
-        nodes.forEach((n, i) => {
-          const d = distanceM(pos.coords.latitude, pos.coords.longitude, n.lat, n.lng);
+        positions.forEach((p, i) => {
+          const d = distanceM(pos.coords.latitude, pos.coords.longitude, p.lat, p.lng);
           if (d < bd) { bd = d; best = i; }
         });
         setGpsIdx(best);
@@ -175,11 +222,33 @@ export default function JourneyLive() {
       { enableHighAccuracy: true, maximumAge: 10_000, timeout: 10_000 },
     );
     return () => navigator.geolocation.clearWatch(id);
-  }, [nodes, demo]);
+  }, [positions, demo]);
 
-  if (!data || !nodes) return null;
-  const cur = demo ? demoIdx : gpsIdx;
-  const remMin = nodes[cur ?? 0].remMin;
+  if (!data || !nodes || !positions) return null;
+  const curIdx = demo ? Math.min(demoIdx, positions.length - 1) : gpsIdx;
+  const cur = curIdx === null ? null : positions[curIdx];
+  const remMin = (cur ?? positions[0]).remMin;
+
+  const curBadge = (
+    <span className="ml-auto shrink-0 rounded-md bg-primary px-1.5 py-0.5 text-[0.65rem] font-bold text-white">
+      지금 여기
+    </span>
+  );
+  const railDot = (state: "cur" | "passed" | "todo") => (
+    <>
+      {state === "cur" && (
+        <span
+          className="absolute -left-[21px] top-3 h-[14px] w-[14px] rounded-full"
+          style={{ background: "rgba(0,79,158,.35)", animation: "locpulse 2s ease-out infinite" }}
+        />
+      )}
+      <span
+        className={`absolute -left-[21px] top-3 h-[14px] w-[14px] rounded-full border-2 border-white shadow ${
+          state === "cur" ? "bg-primary" : state === "passed" ? "bg-primary/60" : "bg-gray-300"
+        }`}
+      />
+    </>
+  );
 
   return (
     <div className="flex h-full flex-col">
@@ -194,7 +263,7 @@ export default function JourneyLive() {
         </p>
       </div>
 
-      {/* 시연 모드: GPS 대신 버튼으로 현재 위치 이동 */}
+      {/* 시연 모드: GPS 대신 버튼으로 현재 위치 이동 (경유 정류장 단위) */}
       {demo && (
         <div className="mt-2 flex items-center gap-2 rounded-xl bg-warn-soft px-3 py-1.5">
           <span className="flex-1 text-[0.75rem] font-bold text-warn">시연 모드 · 위치 이동</span>
@@ -207,7 +276,7 @@ export default function JourneyLive() {
           </button>
           <button
             type="button"
-            onClick={() => setDemoIdx((v) => Math.min(nodes.length - 1, v + 1))}
+            onClick={() => setDemoIdx((v) => Math.min(positions.length - 1, v + 1))}
             className="rounded-lg bg-primary px-3 py-1 text-[0.8rem] font-bold text-white active:opacity-80"
           >
             다음 ▸
@@ -221,77 +290,82 @@ export default function JourneyLive() {
           <span className="absolute bottom-5 left-[8px] top-5 w-[3px] rounded bg-line" />
           <div className="flex flex-col gap-2">
             {nodes.map((n, i) => {
-              const isCur = cur === i;
-              const passed = cur !== null && i < cur;
+              const isCurNode = cur?.kind === "node" && cur.nodeIdx === i;
+              const riding = cur?.kind === "riding" && cur.nodeIdx === i ? cur : null;
+              const passed =
+                cur !== null &&
+                (cur.kind === "node" ? i < cur.nodeIdx : i <= cur.nodeIdx);
               const isStopNode = !!n.stopId;
               const a = n.stopId ? arr[n.stopId] : undefined;
               const bestBus = a?.ok ? a.list[0] : undefined;
               const busNo = bestBus ? bestBus.routeNo : n.routeNo?.split("·")[0];
               return (
-                <div key={i} className="relative">
-                  {/* 레일 점: 지나온 곳 = 파랑, 현재 = 펄스, 남은 곳 = 회색 */}
-                  {isCur && (
-                    <span
-                      className="absolute -left-[21px] top-3 h-[14px] w-[14px] rounded-full"
-                      style={{ background: "rgba(0,79,158,.35)", animation: "locpulse 2s ease-out infinite" }}
-                    />
-                  )}
-                  <span
-                    className={`absolute -left-[21px] top-3 h-[14px] w-[14px] rounded-full border-2 border-white shadow ${
-                      isCur ? "bg-primary" : passed ? "bg-primary/60" : "bg-gray-300"
-                    }`}
-                  />
-
-                  {isStopNode ? (
-                    <div className={`rounded-xl border-2 bg-white p-2.5 ${isCur ? "border-primary ring-2 ring-primary/30" : "border-line"}`}>
-                      <div className="flex items-center gap-1.5">
+                <div key={i} className="contents">
+                  <div className="relative">
+                    {railDot(isCurNode ? "cur" : passed ? "passed" : "todo")}
+                    {isStopNode ? (
+                      <div className={`rounded-xl border-2 bg-white p-2.5 ${isCurNode ? "border-primary ring-2 ring-primary/30" : "border-line"}`}>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[0.7rem] font-black ${ROLE_STYLE[n.role]}`}>
+                            {n.role}
+                          </span>
+                          <span className="truncate text-[0.9rem] font-bold">{n.name}</span>
+                          {isCurNode && curBadge}
+                        </div>
+                        {n.routeNo && (
+                          <p className="mt-1 text-[0.8rem]">
+                            {busNo && <span className="rounded bg-primary px-1.5 py-0.5 font-black text-white">{busNo}번</span>}{" "}
+                            {a === undefined
+                              ? "도착 확인 중…"
+                              : !a.ok
+                                ? "도착 정보를 못 불러왔어요"
+                                : bestBus
+                                  ? `${bestBus.minutes}분 후 도착`
+                                  : "지금 오는 버스 없음"}
+                            {n.ride !== undefined && (
+                              <span className="ml-1.5 text-[0.72rem] text-muted">· {n.ride}개 정류장 이동</span>
+                            )}
+                          </p>
+                        )}
+                        {n.fac && (
+                          <div className="mt-1.5">
+                            <FacilityChips fac={n.fac} compact />
+                          </div>
+                        )}
+                        {n.shelter && (
+                          <p className="mt-1 text-[0.72rem] font-bold text-[#2b8a3e]">
+                            무더위쉼터 {n.shelter.name} · 직선 {formatDistance(n.shelter.dist)}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className={`flex items-center gap-1.5 rounded-xl px-1.5 py-1.5 ${isCurNode ? "bg-primary-soft ring-2 ring-primary/40" : ""}`}>
                         <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[0.7rem] font-black ${ROLE_STYLE[n.role]}`}>
                           {n.role}
                         </span>
                         <span className="truncate text-[0.9rem] font-bold">{n.name}</span>
-                        {isCur && (
-                          <span className="ml-auto shrink-0 rounded-md bg-primary px-1.5 py-0.5 text-[0.65rem] font-bold text-white">
-                            지금 여기
-                          </span>
-                        )}
+                        {isCurNode && curBadge}
                       </div>
-                      {n.routeNo && (
-                        <p className="mt-1 text-[0.8rem]">
-                          {busNo && <span className="rounded bg-primary px-1.5 py-0.5 font-black text-white">{busNo}번</span>}{" "}
-                          {a === undefined
-                            ? "도착 확인 중…"
-                            : !a.ok
-                              ? "도착 정보를 못 불러왔어요"
-                              : bestBus
-                                ? `${bestBus.minutes}분 후 도착`
-                                : "지금 오는 버스 없음"}
-                          {n.ride !== undefined && (
-                            <span className="ml-1.5 text-[0.72rem] text-muted">· {n.ride}개 정류장 이동</span>
-                          )}
-                        </p>
-                      )}
-                      {n.fac && (
-                        <div className="mt-1.5">
-                          <FacilityChips fac={n.fac} compact />
+                    )}
+                  </div>
+
+                  {/* 버스 이동 중 — 승차/환승 박스와 다음 박스 사이에 현재 정류장이 실시간으로 끼어듦 */}
+                  {riding && (
+                    <div className="relative">
+                      {railDot("cur")}
+                      <div className="rounded-xl border-2 border-primary bg-primary-soft p-2.5 ring-2 ring-primary/30">
+                        <div className="flex items-center gap-1.5">
+                          <span className="shrink-0 rounded-md bg-primary px-1.5 py-0.5 text-[0.7rem] font-black text-white">
+                            버스 이동 중
+                          </span>
+                          <span className="truncate text-[0.9rem] font-bold">{riding.name}</span>
+                          {curBadge}
                         </div>
-                      )}
-                      {n.shelter && (
-                        <p className="mt-1 text-[0.72rem] font-bold text-[#2b8a3e]">
-                          무더위쉼터 {n.shelter.name} · 직선 {formatDistance(n.shelter.dist)}
+                        <p className="mt-1 text-[0.78rem] text-muted">
+                          <span className="font-bold text-ink">{riding.alightName}</span> 하차까지{" "}
+                          <span className="font-bold text-primary">{riding.stopsLeft}개 정류장</span>
                         </p>
-                      )}
-                    </div>
-                  ) : (
-                    <div className={`flex items-center gap-1.5 rounded-xl px-1.5 py-1.5 ${isCur ? "bg-primary-soft ring-2 ring-primary/40" : ""}`}>
-                      <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[0.7rem] font-black ${ROLE_STYLE[n.role]}`}>
-                        {n.role}
-                      </span>
-                      <span className="truncate text-[0.9rem] font-bold">{n.name}</span>
-                      {isCur && (
-                        <span className="ml-auto shrink-0 rounded-md bg-primary px-1.5 py-0.5 text-[0.65rem] font-bold text-white">
-                          지금 여기
-                        </span>
-                      )}
+                      </div>
                     </div>
                   )}
                 </div>

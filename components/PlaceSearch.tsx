@@ -133,9 +133,9 @@ export default function PlaceSearchModal({
           <VoiceButton onResult={setQ} />
         </div>
 
-        {/* 결과 목록: 내용만큼만 차지하고(반응형), 넘칠 때만 내부 스크롤 */}
-        <div className="relative mt-3 min-h-0 shrink">
-          <div ref={listRef} className="no-scrollbar max-h-full overflow-y-auto">
+        {/* 결과 목록: 내용만큼만 차지하고(반응형), 넘치면 이 영역 안에서만 스크롤 */}
+        <div className="relative mt-3 min-h-0 flex-1 overflow-hidden">
+          <div ref={listRef} className="no-scrollbar h-full overflow-y-auto">
             {!q.trim() && (
               <p className="px-4 py-8 text-center leading-relaxed text-muted">
                 가고 싶은 곳의 이름이나 주소를 입력해 주세요

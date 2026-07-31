@@ -15,9 +15,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
     <main className="px-5 py-6">
       <h1 className="text-[1.1rem] font-bold text-muted">{stop.name} 정류장</h1>
       <p className="mt-3 text-[1.35rem] font-black leading-snug">
-        불편한 곳을 사진으로
-        <br />
-        찍어 주세요
+        불편한 곳을 사진으로 찍어 주세요
       </p>
       <ReportForm stopId={stop.id} stopName={stop.name} />
     </main>

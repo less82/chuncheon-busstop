@@ -174,9 +174,7 @@ export default function JourneyFinder() {
 
       {noRoute && (
         <div className="mt-1 rounded-2xl border-2 border-line bg-white p-5 text-center leading-relaxed text-muted">
-          버스로 가는 경로를 찾지 못했어요.
-          <br />
-          출발·도착을 조금 옮겨서 다시 찾아보세요.
+          버스로 가는 경로를 찾지 못했어요. 출발·도착을 조금 옮겨서 다시 찾아보세요.
         </div>
       )}
 

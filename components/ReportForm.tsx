@@ -39,11 +39,7 @@ export default function ReportForm({ stopId, stopName }: { stopId: string; stopN
     return (
       <div className="mt-8 rounded-2xl border-2 border-primary bg-primary-soft p-6 text-center">
         <p className="text-[1.3rem] font-black text-primary">접수됐어요</p>
-        <p className="mt-3 leading-relaxed">
-          인공지능이 내용을 확인해
-          <br />
-          춘천시에 전달합니다
-        </p>
+        <p className="mt-3 leading-relaxed">인공지능이 내용을 확인해 춘천시에 전달합니다</p>
         <Link
           href={`/stops/${stopId}`}
           className="mt-6 block rounded-xl bg-primary py-4 font-bold text-white"

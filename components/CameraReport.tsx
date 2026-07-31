@@ -1,6 +1,6 @@
 "use client";
 
-// 민원 탭 (v8.3): 사진 한 장 + [확인]이 전부. 진입 시 카메라 자동 실행(막히면 하단 버튼).
+// 민원 탭 (v8.4): 이 화면이 첫 진입 — 하단 [사진 찍기]로 카메라를 연다 (자동 실행 없음).
 // 정류장은 촬영 시점의 내 위치(GPS)로 최근접 매칭, 시각은 서버 타임스탬프 — 사용자에게 묻지 않는다.
 // 문구는 <br/> 없이 짧은 문장으로 — keep-all이 어절 단위로 자연스럽게 접는다.
 import { useEffect, useRef, useState } from "react";
@@ -22,8 +22,6 @@ function nearestStop(lat: number, lng: number): SlimStop {
   return best;
 }
 
-const STEPS = ["불편한 곳을 사진으로 찍어요", "확인 버튼을 눌러요", "춘천시에 전달돼요"];
-
 export default function CameraReport() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -40,12 +38,6 @@ export default function CameraReport() {
       () => {},
       { timeout: 5000 },
     );
-  }, []);
-
-  // 탭 진입 즉시 카메라 열기 (브라우저가 막으면 하단 [사진 찍기]가 대신한다)
-  useEffect(() => {
-    const t = setTimeout(() => inputRef.current?.click(), 250);
-    return () => clearTimeout(t);
   }, []);
 
   const onPick = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -104,20 +96,8 @@ export default function CameraReport() {
           </div>
         ) : phase === "idle" ? (
           <>
-            <h1 className="text-[1.3rem] font-black leading-snug">사진 한 장으로 알려주세요</h1>
-            <p className="mt-2 leading-relaxed text-muted">
-              위치와 시간은 저절로 기록되니 찍어서 보내기만 하면 됩니다.
-            </p>
-            <div className="mt-5 flex flex-col gap-2">
-              {STEPS.map((s, i) => (
-                <div key={i} className="flex items-center gap-3 rounded-2xl border border-line bg-white px-4 py-3">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[0.85rem] font-black text-primary">
-                    {i + 1}
-                  </span>
-                  <span className="font-bold">{s}</span>
-                </div>
-              ))}
-            </div>
+            <h1 className="text-[1.6rem] font-black leading-snug">사진 한 장으로 알려주세요</h1>
+            <p className="mt-2 text-[0.95rem] text-muted">사진을 찍어 보내기만 하면 됩니다.</p>
             <p className="mt-4 text-[0.8rem] leading-relaxed text-muted">
               사진에 사람 얼굴이나 차량번호가 나오지 않게 해주세요.
             </p>

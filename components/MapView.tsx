@@ -11,11 +11,49 @@ import { DEFAULT_CENTER, formatDistance, distanceM } from "@/lib/geo";
 import { useKakaoReady } from "@/lib/useKakao";
 
 const SHELTERS = (sheltersRaw as Shelter[]).filter((s) => s.operating);
-// 쉼터는 226곳이 시 전역에 성기게 흩어져 있다 — 정류장 기준의 레벨 3(50m)이면 빈 화면이 된다
-const FIXED_LEVEL = 6;
+const FIXED_LEVEL = 3; // 카카오맵 레벨 3 = 축척 50m
 const DEEPLINK_MATCH_M = 50; // 정류장 상세에서 넘어온 좌표와 쉼터를 맞추는 허용 오차
 
+const WEEKDAY = ["일", "월", "화", "수", "목", "금", "토"];
+
+// "0900" → 540. "2400"(자정)은 1440이 되어 Date로 파싱할 때 생기는 날짜 넘김을 피한다.
+function toMinutes(hhmm: string): number {
+  return Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(2));
+}
+
+// 지금 문을 열었는지 — 운영 요일과 시각을 함께 본다.
+// end <= start 면 자정을 넘겨 운영하는 곳(예: 0600~0100)이라,
+// 그 새벽 시간대는 오늘이 아니라 '어제 시작한 영업분'으로 판정해야 맞다.
+function isOpenNow(sh: Shelter, now: Date): boolean {
+  const runsOn = (dayIndex: number) =>
+    (sh.days ?? "")
+      .split(",")
+      .map((d) => d.trim())
+      .includes(WEEKDAY[dayIndex]);
+
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const start = toMinutes(sh.start);
+  const end = toMinutes(sh.end);
+
+  if (end > start) return runsOn(now.getDay()) && nowMin >= start && nowMin < end;
+  if (nowMin >= start) return runsOn(now.getDay());
+  return nowMin < end && runsOn((now.getDay() + 6) % 7);
+}
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+// 쉼터 핀: 글씨 없이 초록 핀 + 흰 원. 선택되면 크고 진한 핀으로 구분
+function pinSvg(selected: boolean): string {
+  const w = selected ? 40 : 30;
+  const h = selected ? 50 : 38;
+  const fill = selected ? "#155d28" : "#2b8a3e";
+  return (
+    `<svg width="${w}" height="${h}" viewBox="0 0 30 38">` +
+    `<path d="M15 37C15 37 3 22.5 3 13a12 12 0 0 1 24 0c0 9.5-12 24-12 24z" fill="${fill}" stroke="#fff" stroke-width="2"/>` +
+    '<circle cx="15" cy="13" r="4.5" fill="#fff"/>' +
+    "</svg>"
+  );
+}
 
 export default function MapView() {
   const params = useSearchParams();
@@ -24,6 +62,7 @@ export default function MapView() {
   const mapRef = useRef<any>(null);
   const myOv = useRef<any>(null);
   const myPosRef = useRef<{ lat: number; lng: number } | null>(null);
+  const pinRefs = useRef<{ el: HTMLButtonElement; ov: any; sh: Shelter }[]>([]);
 
   // 딥링크(정류장 상세→근처 쉼터) 좌표 — 지도 중심이자 카드 자동 선택의 기준
   const qLat = parseFloat(params.get("lat") ?? "");
@@ -63,27 +102,42 @@ export default function MapView() {
     });
     mapRef.current = map;
 
+    // 카드 바깥(지도)을 누르면 닫힘 — 쉼터 핀은 clickable:true라 이 이벤트를 막는다
+    kakao.maps.event.addListener(map, "click", () => setSelShelter(null));
+
     // 쉼터 226곳은 고정 — 한 번만 그려두면 팬·줌을 따라다닌다 (뷰포트 재계산 불필요)
+    pinRefs.current = [];
     for (const sh of SHELTERS) {
       const el = document.createElement("button");
       el.title = sh.name;
       el.style.cssText = "width:30px;height:38px;padding:0;border:0;background:none;cursor:pointer;";
-      el.innerHTML =
-        '<svg width="30" height="38" viewBox="0 0 30 38">' +
-        '<path d="M15 37C15 37 3 22.5 3 13a12 12 0 0 1 24 0c0 9.5-12 24-12 24z" fill="#2b8a3e" stroke="#fff" stroke-width="2"/>' +
-        '<text x="15" y="17.5" text-anchor="middle" fill="#fff" font-size="10.5" font-weight="900">쉼</text>' +
-        "</svg>";
+      el.innerHTML = pinSvg(false);
       el.onclick = () => {
         const my = myPosRef.current;
         setSelShelter({ ...sh, dist: my ? distanceM(my.lat, my.lng, sh.lat, sh.lng) : undefined });
       };
       // yAnchor 1 = 핀 꼬리 끝이 좌표에 닿게
-      new kakao.maps.CustomOverlay({
+      // clickable = 핀 클릭이 지도 click(카드 닫기)까지 전달되지 않게 막는다
+      const ov = new kakao.maps.CustomOverlay({
         position: new kakao.maps.LatLng(sh.lat, sh.lng),
         content: el,
         yAnchor: 1,
-      }).setMap(map);
+        clickable: true,
+      });
+      ov.setMap(map);
+      pinRefs.current.push({ el, ov, sh });
     }
+
+    // 진입하자마자 가장 가까운 쉼터 카드를 펼친다 (딥링크 선택이 없을 때만)
+    const selectNearest = (lat: number, lng: number, withDist: boolean) => {
+      let best: Shelter | null = null;
+      let bd = Infinity;
+      for (const sh of SHELTERS) {
+        const d = distanceM(lat, lng, sh.lat, sh.lng);
+        if (d < bd) { bd = d; best = sh; }
+      }
+      if (best) setSelShelter((prev) => prev ?? { ...best!, dist: withDist ? bd : undefined });
+    };
 
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -93,26 +147,35 @@ export default function MapView() {
           if (!hasQ) {
             map.setCenter(new kakao.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
             map.setLevel(FIXED_LEVEL);
+            selectNearest(pos.coords.latitude, pos.coords.longitude, true);
           }
         },
-        () => {},
+        () => { if (!hasQ) selectNearest(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng, false); },
         { timeout: 5000 },
       );
+    } else if (!hasQ) {
+      selectNearest(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng, false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready]);
 
+  // 선택된 쉼터 핀을 크고 진하게 — 다른 핀과 구분
+  useEffect(() => {
+    for (const p of pinRefs.current) {
+      const isSel =
+        !!selShelter && p.sh.lat === selShelter.lat && p.sh.lng === selShelter.lng && p.sh.name === selShelter.name;
+      p.el.style.width = isSel ? "40px" : "30px";
+      p.el.style.height = isSel ? "50px" : "38px";
+      p.el.innerHTML = pinSvg(isSel);
+      p.ov.setZIndex(isSel ? 8 : 1);
+    }
+  }, [selShelter]);
+
+  const openNow = selShelter ? isOpenNow(selShelter, new Date()) : null;
+
   return (
     <div className="relative h-full">
       <div ref={boxRef} className="h-full w-full" />
-
-      {/* 레이어가 하나뿐이라 토글 대신 범례 — 끄면 빈 지도가 될 뿐이다 */}
-      <div className="absolute left-3 top-3 z-10 flex items-center rounded-xl bg-white/95 px-3 py-1.5 text-[0.8rem] font-bold shadow">
-        <span className="mr-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#2b8a3e] text-[0.6rem] text-white">
-          쉼
-        </span>
-        무더위쉼터 {SHELTERS.length}곳
-      </div>
 
       {!ready && (
         <div className="absolute inset-0 flex items-center justify-center bg-bg">
@@ -137,11 +200,14 @@ export default function MapView() {
                 {[selShelter.kind, selShelter.addr].filter(Boolean).join(" · ")}
               </p>
             )}
-            {selShelter.days && <p className="mt-0.5 text-[0.75rem] text-muted">운영: {selShelter.days}</p>}
+            {openNow !== null && (
+              <p
+                className={`mt-1.5 text-[0.9rem] font-bold ${openNow ? "text-[#2b8a3e]" : "text-warn"}`}
+              >
+                {openNow ? "운영 중" : "운영 종료"}
+              </p>
+            )}
           </div>
-          <button type="button" onClick={() => setSelShelter(null)} className="mx-auto mt-1.5 block rounded-lg bg-white/95 px-3 py-1 text-[0.75rem] font-bold text-muted shadow">
-            닫기
-          </button>
         </div>
       )}
     </div>

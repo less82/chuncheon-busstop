@@ -133,10 +133,8 @@ export default function PlaceSearchModal({
         <div className="relative mt-3 min-h-0 flex-1">
           <div ref={listRef} className="no-scrollbar h-full max-h-60 overflow-y-auto">
             {!q.trim() && (
-              <p className="py-8 text-center leading-relaxed text-muted">
-                가고 싶은 곳의 이름이나
-                <br />
-                주소를 입력해 주세요
+              <p className="px-4 py-8 text-center leading-relaxed text-muted">
+                가고 싶은 곳의 이름이나 주소를 입력해 주세요
               </p>
             )}
             {q.trim() && kakaoReady && searching && <p className="py-6 text-center text-muted">찾는 중…</p>}

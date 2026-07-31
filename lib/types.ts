@@ -48,6 +48,8 @@ export interface Shelter {
   addr: string | null;
   kind: string | null;
   days: string | null;
+  start: string; // 운영 시작 시각 HHMM ("0900")
+  end: string; // 운영 종료 시각 HHMM ("2400" = 자정, end <= start 면 자정 넘겨 운영)
   lat: number;
   lng: number;
 }

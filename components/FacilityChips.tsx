@@ -1,4 +1,4 @@
-// 시설 5종 단어 칩 (spec §3 공통): 있음=파랑 채움, 없음=회색 취소선, 몰라요=점선
+// 시설 5종 단어 칩 (spec §3 공통): 있음=파랑 채움, 없음=회색 취소선, 미확인=점선
 import { FAC_KEYS, FAC_LABEL, type FacStatus } from "@/lib/types";
 
 const STYLE: Record<FacStatus, string> = {
@@ -7,7 +7,7 @@ const STYLE: Record<FacStatus, string> = {
   u: "bg-white text-muted border-dashed border-line",
 };
 
-const SUFFIX: Record<FacStatus, string> = { y: " 있음", n: " 없음", u: " 몰라요" };
+const SUFFIX: Record<FacStatus, string> = { y: " 있음", n: " 없음", u: " 미확인" };
 
 export default function FacilityChips({
   fac,

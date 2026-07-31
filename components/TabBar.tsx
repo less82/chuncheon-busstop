@@ -21,10 +21,10 @@ export default function TabBar() {
     <nav className="shrink-0 border-t border-line bg-white pb-[env(safe-area-inset-bottom)] lg:pb-0">
       <div className="grid grid-cols-3">
         <button type="button" onClick={() => router.push(loadHomePath())} className={cls(isHome)}>
-          홈
+          길찾기
         </button>
         <Link href="/map" className={cls(isMap)}>
-          지도
+          쉼터
         </Link>
         <Link href="/report" className={cls(isReport)}>
           민원

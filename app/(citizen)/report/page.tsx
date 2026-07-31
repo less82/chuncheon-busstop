@@ -1,6 +1,6 @@
-import NearbyReport from "@/components/NearbyReport";
+import CameraReport from "@/components/CameraReport";
 
-// 민원 탭 (v8.1): 가까운 정류장 선택 → 사진 한 장 제보 (spec §3.5)
+// 민원 탭 (v8.2): 진입 즉시 카메라 → 사진 + [확인]. 정류장·시각은 내부 처리 (spec §3.5)
 export default function ReportTabPage() {
   return (
     <main className="px-5 py-6">
@@ -9,8 +9,7 @@ export default function ReportTabPage() {
         <br />
         찍어 주세요
       </h1>
-      <p className="mt-2 text-[0.9rem] font-bold text-muted">어느 정류장인가요?</p>
-      <NearbyReport />
+      <CameraReport />
     </main>
   );
 }

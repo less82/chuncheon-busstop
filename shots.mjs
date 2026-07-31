@@ -49,7 +49,7 @@ await page.evaluate(() => {
   btns.find((b) => b.textContent.includes("도착"))?.click();
 });
 await sleep(800);
-await page.keyboard.type("춘천역", { delay: 60 });
+await page.keyboard.type("한림대학교", { delay: 60 });
 await sleep(2500);
 // 첫 결과 탭 → 지도 미리보기 펼침
 await page.evaluate(() => {

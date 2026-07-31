@@ -294,11 +294,9 @@ export default function JourneyLive() {
 
                     {/* 흐름 연결: 카드 사이를 세로선 + 문구로 잇는다 */}
                     {(n.ride !== undefined || n.role === "하차") && (
-                      <div className="flex items-center gap-2 pl-5">
-                        <span className="h-6 w-[2px] shrink-0 rounded bg-line" />
-                        <span className="py-0.5 text-[0.75rem] font-bold text-muted">
-                          {n.ride !== undefined ? `버스 타고 ${n.ride}개 정류장` : "내려서 걸어가기"}
-                        </span>
+                      <div className="flex items-center gap-2 py-1 pl-4 text-[0.75rem] font-bold text-muted">
+                        <span className="text-primary">↓</span>
+                        {n.ride !== undefined ? `버스 타고 ${n.ride}개 정류장 이동` : "내려서 걸어가기"}
                       </div>
                     )}
                   </div>
@@ -318,8 +316,9 @@ export default function JourneyLive() {
                           <span className="font-bold text-primary">{riding.stopsLeft}개 정류장</span>
                         </p>
                       </div>
-                      <div className="flex items-center gap-2 pl-5">
-                        <span className="h-6 w-[2px] shrink-0 rounded bg-line" />
+                      <div className="flex items-center gap-2 py-1 pl-4 text-[0.75rem] font-bold text-muted">
+                        <span className="text-primary">↓</span>
+                        계속 이동 중
                       </div>
                     </div>
                   )}

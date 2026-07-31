@@ -9,8 +9,6 @@ import type { SlimStop } from "@/lib/types";
 import { DEFAULT_CENTER, distanceM } from "@/lib/geo";
 
 const ALL = slimStops as SlimStop[];
-// 관리자 대시보드는 별도 배포 — URL이 설정된 경우에만 링크를 노출한다
-const ADMIN_URL = process.env.NEXT_PUBLIC_ADMIN_URL;
 
 type Phase = "idle" | "preview" | "sending" | "done" | "error";
 
@@ -98,9 +96,9 @@ export default function CameraReport() {
           </div>
         ) : phase === "idle" ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
-            <p className="text-[1.4rem] font-black leading-snug">사진 한 장만 찍어주시면 됩니다</p>
+            <p className="text-[1.4rem] font-black leading-snug">사진 찍어서 보내주세요</p>
             <p className="max-w-[17rem] text-[0.85rem] leading-relaxed text-muted">
-              나머지는 저희가 알아서 처리합니다
+              얼굴과 차량번호는 피해서 찍어 주세요
             </p>
           </div>
         ) : (
@@ -121,18 +119,6 @@ export default function CameraReport() {
           </>
         )}
       </div>
-
-      {/* 담당자용 대시보드 (같은 Supabase를 보므로 여기서 보낸 제보가 그대로 뜬다) */}
-      {ADMIN_URL && (
-        <a
-          href={ADMIN_URL}
-          target="_blank"
-          rel="noreferrer"
-          className="shrink-0 pt-2 text-center text-[0.75rem] font-bold text-muted underline underline-offset-4"
-        >
-          춘천시 담당자용 대시보드 열기
-        </a>
-      )}
 
       {/* 하단 고정 버튼 */}
       <div className="shrink-0 pt-3">

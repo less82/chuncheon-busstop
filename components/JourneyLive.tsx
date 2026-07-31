@@ -7,7 +7,7 @@
 // - ?demo=1 : 시연 모드 — GPS 대신 버튼으로 경유 정류장 단위 이동 (데이터는 전부 실데이터)
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import type { Arrival } from "@/lib/arrivals";
+import { pickArrival, type Arrival } from "@/lib/arrivals";
 import { distanceM, formatDistance } from "@/lib/geo";
 import { loadJourneyState } from "@/lib/journeyStore";
 import { type BusLeg, type Journey, type Place } from "@/lib/journey";
@@ -75,9 +75,8 @@ export default function JourneyLive() {
           .then((r) => (r.ok ? r.json() : Promise.reject()))
           .then((d) => {
             if (dead) return;
-            const routes = n.routeNo!.split("·");
-            const list = (d.arrivals as Arrival[]).filter((a) => routes.includes(a.routeNo));
-            setArr((p) => ({ ...p, [n.stopId!]: { ok: true, list } }));
+            const hit = pickArrival(d.arrivals as Arrival[], n.routeNo!);
+            setArr((p) => ({ ...p, [n.stopId!]: { ok: true, list: hit ? [hit] : [] } }));
           })
           .catch(() => { if (!dead) setArr((p) => ({ ...p, [n.stopId!]: { ok: false, list: [] } })); });
       }

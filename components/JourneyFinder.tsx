@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { recommendJourneys, type BusLeg, type Journey, type Place } from "@/lib/journey";
 import { loadJourneyState, saveJourneyState } from "@/lib/journeyStore";
-import type { Arrival } from "@/lib/arrivals";
+import { pickArrival, type Arrival } from "@/lib/arrivals";
 import { useKakaoReady } from "@/lib/useKakao";
 import PlaceSearchModal from "./PlaceSearch";
 
@@ -80,9 +80,7 @@ export default function JourneyFinder() {
         .then((r) => (r.ok ? r.json() : Promise.reject()))
         .then((d) => {
           if (dead) return;
-          const routes = l.routeNo.split("·");
-          const first = (d.arrivals as Arrival[]).filter((a) => routes.includes(a.routeNo))[0] ?? null;
-          setBest((p) => ({ ...p, [i]: first }));
+          setBest((p) => ({ ...p, [i]: pickArrival(d.arrivals as Arrival[], l.routeNo) }));
         })
         .catch(() => { if (!dead) setBest((p) => ({ ...p, [i]: null })); });
     });

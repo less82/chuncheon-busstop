@@ -37,6 +37,7 @@ export default function JourneyLive() {
   const [arr, setArr] = useState<ArrState>({});
   const [gpsIdx, setGpsIdx] = useState<number | null>(null); // positions 인덱스
   const [demoIdx, setDemoIdx] = useState(0);
+  const [focusNode, setFocusNode] = useState<number | null>(null); // 탭한 정류장 — 지도가 그곳을 비춘다
   const mapBoxRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const curOvRef = useRef<any>(null);
@@ -100,7 +101,7 @@ export default function JourneyLive() {
     return () => navigator.geolocation.clearWatch(id);
   }, [positions, demo]);
 
-  // 상단 지도: 경로 폴리라인 + 정류장 점. 축척은 내 위치 기준 50m(레벨 3) 고정
+  // 상단 지도: 정류장 점 + 쉼터 핀 (노선 선 없음). 축척 50m(레벨 3) 고정
   const [mapReady, setMapReady] = useState(false);
   useEffect(() => {
     if (!kakaoReady || !nodes || !data || !mapBoxRef.current || mapRef.current) return;
@@ -110,11 +111,6 @@ export default function JourneyLive() {
       level: 3, // 축척 50m — 지도 탭과 동일 기준
     });
     mapRef.current = map;
-    for (const leg of data.j.legs) {
-      if (leg.kind !== "bus") continue;
-      const path = (leg as BusLeg).path.map(([la, ln]) => new kakao.maps.LatLng(la, ln));
-      new kakao.maps.Polyline({ map, path, strokeWeight: 5, strokeColor: "#004f9e", strokeOpacity: 0.75 });
-    }
     // 추천된 무더위쉼터(각 정류장 50m 이내)를 초록 핀으로 — 타임라인에 뜬 곳과 같은 곳
     const seen = new Set<string>();
     for (const n of nodes) {
@@ -174,10 +170,20 @@ export default function JourneyLive() {
     } else {
       curOvRef.current.setPosition(pos);
     }
-    // 내 위치 중심·축척 50m 유지 — 이동하면 지도가 따라온다
-    mapRef.current.setCenter(pos);
+    // 정류장을 탭해 보고 있는 중이면 지도를 뺏지 않는다
+    if (focusNode === null) {
+      mapRef.current.setCenter(pos);
+      mapRef.current.setLevel(3);
+    }
+  }, [mapReady, curIdxCalc, positions, focusNode]);
+
+  // 탭한 정류장으로 지도 이동 (다시 탭하면 내 위치로 복귀)
+  useEffect(() => {
+    if (!mapReady || !mapRef.current || focusNode === null || !nodes) return;
+    const n = nodes[focusNode];
+    mapRef.current.setCenter(new window.kakao.maps.LatLng(n.lat, n.lng));
     mapRef.current.setLevel(3);
-  }, [mapReady, curIdxCalc, positions]);
+  }, [mapReady, focusNode, nodes]);
 
   if (!data || !nodes || !positions) return null;
   const curIdx = curIdxCalc;
@@ -209,10 +215,10 @@ export default function JourneyLive() {
         </div>
       )}
 
-      {/* 타임라인 (레일·점 없음 — 현재 위치는 카드 강조로만 표시) */}
-      <div className="no-scrollbar mt-2 min-h-0 flex-1 overflow-y-auto">
+      {/* 타임라인 (레일·점 없음 — 현재 위치는 카드 강조로만 표시, 한 화면에 담기게 압축) */}
+      <div className="no-scrollbar mt-2 min-h-0 flex-1 overflow-hidden">
         <div>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1.5">
             {nodes.map((n, i) => {
               const isCurNode = cur?.kind === "node" && cur.nodeIdx === i;
               const riding = cur?.kind === "riding" && cur.nodeIdx === i ? cur : null;
@@ -227,7 +233,16 @@ export default function JourneyLive() {
                 <div key={i} className="contents">
                   <div>
                     {isStopNode ? (
-                      <div className={`rounded-xl border-2 p-2.5 ${isCurNode ? "border-primary bg-primary-soft" : `border-line bg-white ${passed ? "opacity-60" : ""}`}`}>
+                      <div
+                        onClick={() => setFocusNode((v) => (v === i ? null : i))}
+                        className={`rounded-xl border-2 p-2 ${
+                          focusNode === i
+                            ? "border-primary bg-white ring-2 ring-primary/30"
+                            : isCurNode
+                              ? "border-primary bg-primary-soft"
+                              : `border-line bg-white ${passed ? "opacity-60" : ""}`
+                        }`}
+                      >
                         <div className="flex items-baseline gap-1.5">
                           <span className={`shrink-0 text-[0.8rem] font-black ${ROLE_STYLE[n.role]}`}>{n.role}</span>
                           <span className="truncate text-[0.9rem] font-bold">{n.name}</span>
@@ -248,8 +263,8 @@ export default function JourneyLive() {
                           </p>
                         )}
                         {n.fac && (
-                          <div className="mt-1.5">
-                            <FacilityChips fac={n.fac} compact />
+                          <div className="mt-1">
+                            <FacilityChips fac={n.fac} oneLine />
                           </div>
                         )}
                         {n.shelter && (

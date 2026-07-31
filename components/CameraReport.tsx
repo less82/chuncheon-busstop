@@ -95,10 +95,10 @@ export default function CameraReport() {
             </p>
           </div>
         ) : phase === "idle" ? (
-          <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
+          <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
             <p className="text-[1.4rem] font-black leading-snug">그냥 사진 찍으면 됩니다</p>
-            <p className="text-[0.85rem] leading-relaxed text-muted">
-              사진에 사람 얼굴이나 차량번호가 나오지 않게 해주세요.
+            <p className="max-w-[16rem] text-[0.85rem] leading-relaxed text-muted">
+              얼굴과 차량번호는 피해서 찍어 주세요
             </p>
           </div>
         ) : (

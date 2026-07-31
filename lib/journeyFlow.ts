@@ -3,7 +3,7 @@ import slimStops from "./data/stops.slim.json";
 import sheltersRaw from "./data/shelters.json";
 import type { SlimStop, Shelter } from "./types";
 import { distanceM } from "./geo";
-import { FIRST_WAIT, PER_STOP, TRANSFER_WAIT, type BusLeg, type Journey, type Place } from "./journey";
+import { FIRST_WAIT, TRANSFER_WAIT, pathMinutes, type BusLeg, type Journey, type Place } from "./journey";
 
 const ALL = slimStops as SlimStop[];
 const byId = new Map(ALL.map((s) => [s.id, s]));
@@ -80,7 +80,7 @@ export function buildNodes(j: Journey, origin: Place, dest: Place): FlowNode[] {
   for (const leg of j.legs) {
     if (leg.kind === "walk") { pendingWalk += leg.minutes; continue; }
     const prev = nodes[nodes.length - 1];
-    prev.outMin = prevBus === null ? pendingWalk : prevBus.rideStops * PER_STOP + pendingWalk;
+    prev.outMin = prevBus === null ? pendingWalk : pathMinutes(prevBus.path) + pendingWalk;
     nodes.push(
       stopNode(prevBus === null ? "승차" : "환승", leg.boardId, leg.boardName, leg.routeNo,
         prevBus === null ? FIRST_WAIT : TRANSFER_WAIT, leg.rideStops),
@@ -91,7 +91,7 @@ export function buildNodes(j: Journey, origin: Place, dest: Place): FlowNode[] {
 
   if (prevBus) {
     const prev = nodes[nodes.length - 1];
-    prev.outMin = prevBus.rideStops * PER_STOP;
+    prev.outMin = pathMinutes(prevBus.path);
     nodes.push(stopNode("하차", prevBus.alightId, prevBus.alightName));
     nodes[nodes.length - 1].outMin = pendingWalk;
   }
@@ -125,7 +125,8 @@ export function buildPositions(nodes: FlowNode[], j: Journey): FlowPos[] {
           name: byCoord.get(`${lat},${lng}`) ?? "이동 중",
           lat,
           lng,
-          remMin: next.remMin + stopsLeft * PER_STOP,
+          // 남은 승차 시간 = 이 경유 정류장(path 인덱스 idx+1)부터 하차까지 실거리 기반
+          remMin: next.remMin + pathMinutes(leg.path, idx + 1),
           stopsLeft,
           alightName: leg.alightName,
         });

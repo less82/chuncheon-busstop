@@ -1,5 +1,6 @@
-// 경로 탐색 (개편 §2): 장소→장소, 직통 + 환승 1회, 예상 시간 오름차순
-// 예상 시간 가정(화면에 "예상"으로 표기): 도보 67m/분, 첫차 대기 6분, 정류장당 2분, 환승 대기 8분
+// 경로 탐색 (개편 §2, v6.4): 장소→장소, 직통 + 환승 1회, 예상 시간 오름차순
+// 예상 시간 가정(화면에 "예상"으로 표기): 도보 67m/분, 첫차 대기 6분, 환승 대기 8분,
+// 버스 = 경유 정류장 좌표 실거리 ÷ 평균 21km/h (정류장당 고정 2분은 장거리에서 2배 이상 과대 — 네이버 실측 대비 보정)
 import routesRaw from "./data/routes.json";
 import slimStops from "./data/stops.slim.json";
 import type { SlimStop } from "./types";
@@ -74,10 +75,20 @@ export interface JourneyState {
 
 const WALK_SPEED = 67; // m/분
 export const FIRST_WAIT = 6; // 첫차 대기 가정(분)
-export const PER_STOP = 2; // 정류장당 소요 가정(분)
 export const TRANSFER_WAIT = 8; // 환승 대기 가정(분)
+const BUS_SPEED = 350; // m/분 ≈ 21km/h (시내버스 평균, 정차 포함 — 실측 역산 23km/h보다 보수적)
 
-function nearStops(p: Place, radius = 600, top = 4): (SlimStop & { walkMin: number })[] {
+// 버스 구간 예상 시간: 경유 정류장 좌표를 잇는 직선거리 합 ÷ 평균속도 (from~to는 path 인덱스)
+export function pathMinutes(path: [number, number][], from = 0, to = path.length - 1): number {
+  let dist = 0;
+  for (let i = from + 1; i <= to; i++) {
+    dist += distanceM(path[i - 1][0], path[i - 1][1], path[i][0], path[i][1]);
+  }
+  return Math.max(1, Math.round(dist / BUS_SPEED));
+}
+
+// 후보 정류장: 반경 600m 내 가까운 8개 (4개는 하차 정류장을 놓쳐 직통을 못 찾는 사례 확인 — v6.4)
+function nearStops(p: Place, radius = 600, top = 8): (SlimStop & { walkMin: number })[] {
   return ALL.map((s) => ({ ...s, d: distanceM(p.lat, p.lng, s.lat, s.lng) }))
     .filter((s) => s.d <= radius)
     .sort((a, b) => a.d - b.d)
@@ -117,7 +128,7 @@ export function planJourneys(origin: Place, dest: Place): Journey[] {
   const out: Journey[] = [];
   const push = (legs: Leg[], transfers: number) => {
     const est = legs.reduce(
-      (sum, l) => sum + (l.kind === "walk" ? l.minutes : l.rideStops * PER_STOP),
+      (sum, l) => sum + (l.kind === "walk" ? l.minutes : pathMinutes(l.path)),
       FIRST_WAIT + transfers * TRANSFER_WAIT,
     );
     const key = legs

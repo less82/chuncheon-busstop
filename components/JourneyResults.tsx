@@ -127,7 +127,7 @@ export default function JourneyResults() {
             <JourneyCard key={j.id} j={j} rank={i + 1} onSelect={() => select(j)} />
           ))}
           <p className="text-center text-[0.7rem] text-muted">
-            경로를 누르면 실시간 안내가 시작돼요 · 예상 시간은 도보·정차 기준 추정값이에요
+            경로를 누르면 실시간 안내가 시작돼요 · 예상 시간은 이동 거리 기반 추정값이에요
           </p>
         </div>
       )}

@@ -1,0 +1,58 @@
+[
+  {
+    "id": "R12",
+    "routeNo": "12",
+    "routeType": "간선",
+    "headsignForward": "후평동",
+    "headsignBackward": "춘천역",
+    "stopIds": ["CC001", "CC018", "CC013", "CC003", "CC004", "CC005", "CC021", "CC008"]
+  },
+  {
+    "id": "R07",
+    "routeNo": "7",
+    "routeType": "지선",
+    "headsignForward": "애니메이션박물관",
+    "headsignBackward": "남춘천역",
+    "stopIds": ["CC006", "CC012", "CC011", "CC022", "CC015"]
+  },
+  {
+    "id": "R64",
+    "routeNo": "64",
+    "routeType": "간선",
+    "headsignForward": "신북읍",
+    "headsignBackward": "춘천역",
+    "stopIds": ["CC001", "CC002", "CC016", "CC014", "CC023"]
+  },
+  {
+    "id": "R09",
+    "routeNo": "9",
+    "routeType": "간선",
+    "headsignForward": "후평동",
+    "headsignBackward": "남춘천역",
+    "stopIds": ["CC006", "CC020", "CC009", "CC017", "CC007", "CC021", "CC008"]
+  },
+  {
+    "id": "R03",
+    "routeNo": "3",
+    "routeType": "간선",
+    "headsignForward": "춘천역",
+    "headsignBackward": "퇴계동",
+    "stopIds": ["CC010", "CC009", "CC006", "CC005", "CC004", "CC003", "CC001"]
+  },
+  {
+    "id": "R01",
+    "routeNo": "1",
+    "routeType": "지선",
+    "headsignForward": "춘천역",
+    "headsignBackward": "김유정역",
+    "stopIds": ["CC024", "CC019", "CC010", "CC006", "CC005", "CC001"]
+  },
+  {
+    "id": "R33",
+    "routeNo": "33",
+    "routeType": "순환",
+    "headsignForward": "강원대후문",
+    "headsignBackward": "명동",
+    "stopIds": ["CC005", "CC004", "CC017", "CC007", "CC021", "CC008", "CC009"]
+  }
+]

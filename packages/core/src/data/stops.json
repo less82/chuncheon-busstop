@@ -1,0 +1,194 @@
+[
+  {
+    "id": "CC001",
+    "name": "춘천역",
+    "alias": "경춘선 춘천역 앞",
+    "lat": 37.8853,
+    "lng": 127.7176,
+    "facilities": { "shade": "yes", "bench": "yes", "shelter": "yes", "bit": "yes", "light": "yes" }
+  },
+  {
+    "id": "CC002",
+    "name": "근화동주민센터",
+    "alias": "근화동",
+    "lat": 37.8798,
+    "lng": 127.7207,
+    "facilities": { "shade": "yes", "bench": "yes", "shelter": "no", "bit": "no", "light": "yes" }
+  },
+  {
+    "id": "CC003",
+    "name": "춘천시청",
+    "alias": "시청 정문",
+    "lat": 37.8813,
+    "lng": 127.7298,
+    "facilities": { "shade": "yes", "bench": "yes", "shelter": "yes", "bit": "yes", "light": "yes" }
+  },
+  {
+    "id": "CC004",
+    "name": "중앙로터리",
+    "alias": "중앙로",
+    "lat": 37.8783,
+    "lng": 127.73,
+    "facilities": { "shade": "yes", "bench": "yes", "shelter": "yes", "bit": "yes", "light": "yes" }
+  },
+  {
+    "id": "CC005",
+    "name": "명동입구",
+    "alias": "명동 닭갈비골목",
+    "lat": 37.877,
+    "lng": 127.7284,
+    "facilities": { "shade": "no", "bench": "yes", "shelter": "no", "bit": "yes", "light": "yes" }
+  },
+  {
+    "id": "CC006",
+    "name": "남춘천역",
+    "alias": "남춘천역 광장",
+    "lat": 37.8641,
+    "lng": 127.7233,
+    "facilities": { "shade": "yes", "bench": "yes", "shelter": "yes", "bit": "yes", "light": "yes" }
+  },
+  {
+    "id": "CC007",
+    "name": "강원대학교정문",
+    "alias": "강대 정문",
+    "lat": 37.869,
+    "lng": 127.742,
+    "facilities": { "shade": "yes", "bench": "yes", "shelter": "no", "bit": "yes", "light": "yes" }
+  },
+  {
+    "id": "CC008",
+    "name": "후평동주공아파트",
+    "alias": "후평3동",
+    "lat": 37.8792,
+    "lng": 127.7457,
+    "facilities": { "shade": "no", "bench": "yes", "shelter": "no", "bit": "unknown", "light": "unknown" }
+  },
+  {
+    "id": "CC009",
+    "name": "석사동사거리",
+    "alias": "석사동",
+    "lat": 37.8593,
+    "lng": 127.7413,
+    "facilities": { "shade": "yes", "bench": "unknown", "shelter": "no", "bit": "yes", "light": "yes" }
+  },
+  {
+    "id": "CC010",
+    "name": "퇴계동주공",
+    "alias": "퇴계동",
+    "lat": 37.8541,
+    "lng": 127.729,
+    "facilities": { "shade": "yes", "bench": "yes", "shelter": "yes", "bit": "no", "light": "yes" }
+  },
+  {
+    "id": "CC011",
+    "name": "공지천",
+    "alias": "공지천 유원지",
+    "lat": 37.8703,
+    "lng": 127.7178,
+    "facilities": { "shade": "yes", "bench": "yes", "shelter": "no", "bit": "no", "light": "unknown" }
+  },
+  {
+    "id": "CC012",
+    "name": "온의동현대아파트",
+    "alias": "온의동",
+    "lat": 37.8637,
+    "lng": 127.7157,
+    "facilities": { "shade": "no", "bench": "no", "shelter": "no", "bit": "no", "light": "yes" }
+  },
+  {
+    "id": "CC013",
+    "name": "강원도청",
+    "alias": "도청 앞",
+    "lat": 37.8853,
+    "lng": 127.7295,
+    "facilities": { "shade": "yes", "bench": "yes", "shelter": "yes", "bit": "yes", "light": "yes" }
+  },
+  {
+    "id": "CC014",
+    "name": "소양강스카이워크",
+    "alias": "스카이워크",
+    "lat": 37.8955,
+    "lng": 127.73,
+    "facilities": { "shade": "yes", "bench": "yes", "shelter": "yes", "bit": "yes", "light": "yes" }
+  },
+  {
+    "id": "CC015",
+    "name": "애니메이션박물관",
+    "alias": "애니박물관",
+    "lat": 37.879,
+    "lng": 127.687,
+    "facilities": { "shade": "unknown", "bench": "yes", "shelter": "no", "bit": "no", "light": "unknown" }
+  },
+  {
+    "id": "CC016",
+    "name": "우두동입구",
+    "alias": "우두동",
+    "lat": 37.9001,
+    "lng": 127.7311,
+    "facilities": { "shade": "no", "bench": "no", "shelter": "no", "bit": "unknown", "light": "no" }
+  },
+  {
+    "id": "CC017",
+    "name": "효자동주민센터",
+    "alias": "효자동",
+    "lat": 37.873,
+    "lng": 127.737,
+    "facilities": { "shade": "yes", "bench": "yes", "shelter": "no", "bit": "yes", "light": "yes" }
+  },
+  {
+    "id": "CC018",
+    "name": "춘천고등학교",
+    "alias": "춘천고",
+    "lat": 37.8788,
+    "lng": 127.725,
+    "facilities": { "shade": "yes", "bench": "yes", "shelter": "no", "bit": "no", "light": "yes" }
+  },
+  {
+    "id": "CC019",
+    "name": "동내면행정복지센터",
+    "alias": "동내면",
+    "lat": 37.842,
+    "lng": 127.753,
+    "facilities": { "shade": "no", "bench": "yes", "shelter": "no", "bit": "no", "light": "unknown" }
+  },
+  {
+    "id": "CC020",
+    "name": "춘천지방법원",
+    "alias": "법원 앞",
+    "lat": 37.86,
+    "lng": 127.735,
+    "facilities": { "shade": "yes", "bench": "yes", "shelter": "yes", "bit": "yes", "light": "yes" }
+  },
+  {
+    "id": "CC021",
+    "name": "강원대학교병원",
+    "alias": "강대병원",
+    "lat": 37.873,
+    "lng": 127.744,
+    "facilities": { "shade": "yes", "bench": "yes", "shelter": "yes", "bit": "yes", "light": "yes" }
+  },
+  {
+    "id": "CC022",
+    "name": "삼천동선착장",
+    "alias": "삼천동",
+    "lat": 37.86,
+    "lng": 127.71,
+    "facilities": { "shade": "unknown", "bench": "no", "shelter": "no", "bit": "no", "light": "unknown" }
+  },
+  {
+    "id": "CC023",
+    "name": "신북읍행정복지센터",
+    "alias": "신북읍",
+    "lat": 37.92,
+    "lng": 127.745,
+    "facilities": { "shade": "no", "bench": "yes", "shelter": "no", "bit": "unknown", "light": "yes" }
+  },
+  {
+    "id": "CC024",
+    "name": "김유정역",
+    "alias": "김유정문학촌",
+    "lat": 37.818,
+    "lng": 127.748,
+    "facilities": { "shade": "yes", "bench": "yes", "shelter": "yes", "bit": "no", "light": "yes" }
+  }
+]

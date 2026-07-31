@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* 춘천시 도시브랜드 기본색상 PANTONE 299 C */
+  --chuncheon: #00a3e0;
+  /* 춘천시기 로고타입 남색 PANTONE 2748 C */
+  --navy: #001871;
+
+  --bg: #ffffff;
+  --ink: #17171b;
+  --stage: #16181d;
+  --guide: #ffd400;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  color: var(--ink);
+  background: var(--stage);
+  overflow: hidden;
+  font-family: 'Nanum Gothic', 'NanumGothic', 'Malgun Gothic', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+*::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+@layer utilities {
+  .tap-feedback {
+    @apply active:scale-[0.98] transition-transform;
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .screen-x {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}

@@ -10,7 +10,6 @@ import { loadJourneyState, saveJourneyState } from "@/lib/journeyStore";
 import type { Arrival } from "@/lib/arrivals";
 import { useKakaoReady } from "@/lib/useKakao";
 import PlaceSearchModal from "./PlaceSearch";
-import FacilityChips from "./FacilityChips";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Picking = "origin" | "dest" | null;
@@ -166,12 +165,7 @@ export default function JourneyFinder() {
           onClick={goLive}
           className="mt-1 rounded-2xl border-2 border-primary bg-white p-4 text-left active:bg-primary-soft"
         >
-          <p className="text-[0.95rem] font-black">
-            <span className="mr-1.5 rounded-md bg-primary px-1.5 py-0.5 text-[0.75rem] text-white">추천</span>
-            {journey.transfers === 0 ? "환승 없음" : `환승 ${journey.transfers}회`}
-          </p>
-
-          <div className="mt-2 flex flex-col gap-2">
+          <div className="flex flex-col gap-2.5">
             {journey.legs.map((l, i) =>
               l.kind === "walk" ? null : (
                 <div key={i}>
@@ -179,14 +173,19 @@ export default function JourneyFinder() {
                     <span className="rounded-md bg-primary px-2 py-0.5 font-black text-white">
                       {(best[i] ? best[i]!.routeNo : (l as BusLeg).routeNo.split("·")[0])}번
                     </span>
-                    <span className="ml-2 font-bold">{(l as BusLeg).boardName}</span>
+                    <span className="ml-2 font-bold text-primary">
+                      {best[i] === undefined
+                        ? "도착 확인 중…"
+                        : best[i] === null
+                          ? "도착 정보 없음"
+                          : `${best[i]!.minutes}분 후 도착`}
+                    </span>
+                  </p>
+                  <p className="mt-1 text-[0.95rem]">
+                    <span className="font-bold">{(l as BusLeg).boardName}</span>
                     <span className="text-muted"> 승차 → </span>
                     <span className="font-bold">{(l as BusLeg).alightName}</span>
-                    <span className="ml-1 text-[0.75rem] text-muted">({(l as BusLeg).rideStops}개 정류장)</span>
                   </p>
-                  <div className="mt-1.5">
-                    <FacilityChips fac={(l as BusLeg).boardFac} oneLine />
-                  </div>
                 </div>
               ),
             )}

@@ -131,7 +131,7 @@ export default function PlaceSearchModal({
 
         {/* 결과 목록: 내부 스크롤 + 스크롤바 숨김. 선택한 항목 바로 아래에 지도가 펼쳐진다 */}
         <div className="relative mt-3 min-h-0 flex-1">
-          <div ref={listRef} className="no-scrollbar h-full max-h-[26rem] overflow-y-auto">
+          <div ref={listRef} className="no-scrollbar h-full max-h-60 overflow-y-auto">
             {!q.trim() && (
               <p className="py-8 text-center leading-relaxed text-muted">
                 가고 싶은 곳의 이름이나
@@ -154,7 +154,11 @@ export default function PlaceSearchModal({
                     >
                       <button
                         type="button"
-                        onClick={() => setPending(isSel ? null : p)}
+                        onClick={() => {
+                          // 키보드를 내려 하단 [확인]·지도 미리보기 영역 확보
+                          (document.activeElement as HTMLElement | null)?.blur?.();
+                          setPending(isSel ? null : p);
+                        }}
                         className={`block w-full px-4 py-3 text-left ${
                           isSel ? "" : "active:bg-primary-soft"
                         }`}

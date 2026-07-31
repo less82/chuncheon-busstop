@@ -1,13 +1,35 @@
 "use client";
 
-// 추천 경로 (v6): 최소 시간 경로 2개. 카드를 탭하면 실시간 안내(/route/live)로 진입
+// 추천 경로 (v6.2): 최소 시간 경로 2개. 같은 경로의 여러 버스 중 '가장 빨리 오는 한 대'만 표시
+// (TAGO 실시간 도착 기준, 정보 없으면 대표 번호 폴백). 카드를 탭하면 실시간 안내(/route/live)로 진입
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { recommendJourneys, type Journey, type BusLeg, type Place } from "@/lib/journey";
 import { loadJourneyState, saveJourneyState } from "@/lib/journeyStore";
+import type { Arrival } from "@/lib/arrivals";
 import FacilityChips from "./FacilityChips";
 
 function JourneyCard({ j, rank, onSelect }: { j: Journey; rank: number; onSelect: () => void }) {
+  // 버스 구간별 가장 빨리 오는 버스 (undefined=확인 중, null=정보 없음)
+  const [best, setBest] = useState<Record<number, Arrival | null>>({});
+
+  useEffect(() => {
+    let dead = false;
+    j.legs.forEach((l, i) => {
+      if (l.kind !== "bus") return;
+      fetch(`/api/arrivals?stopId=${l.boardId}`)
+        .then((r) => (r.ok ? r.json() : Promise.reject()))
+        .then((d) => {
+          if (dead) return;
+          const routes = l.routeNo.split("·");
+          const first = (d.arrivals as Arrival[]).filter((a) => routes.includes(a.routeNo))[0] ?? null;
+          setBest((p) => ({ ...p, [i]: first }));
+        })
+        .catch(() => { if (!dead) setBest((p) => ({ ...p, [i]: null })); });
+    });
+    return () => { dead = true; };
+  }, [j]);
+
   return (
     <button
       type="button"
@@ -34,8 +56,11 @@ function JourneyCard({ j, rank, onSelect }: { j: Journey; rank: number; onSelect
             <div key={i} className="rounded-xl bg-white/80 p-2.5 ring-1 ring-line/60">
               <p className="text-[0.95rem]">
                 <span className="rounded-md bg-primary px-2 py-0.5 font-black text-white">
-                  {(l as BusLeg).routeNo}번
+                  {(best[i] ? best[i]!.routeNo : (l as BusLeg).routeNo.split("·")[0])}번
                 </span>
+                {best[i] && (
+                  <span className="ml-1.5 text-[0.8rem] font-bold text-primary">{best[i]!.minutes}분 후</span>
+                )}
                 <span className="ml-2 font-bold">{(l as BusLeg).boardName}</span>
                 <span className="text-muted"> 승차 → </span>
                 <span className="font-bold">{(l as BusLeg).alightName}</span>

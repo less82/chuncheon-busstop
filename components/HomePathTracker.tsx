@@ -3,7 +3,7 @@
 // 현재 경로가 홈 스택이면 기록 (v5 홈 탭 복원용) — citizen 레이아웃에 상주
 import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { saveHomePath } from "@/lib/homePath";
+import { trackHomePath } from "@/lib/homePath";
 
 export default function HomePathTracker() {
   const pathname = usePathname();
@@ -11,7 +11,7 @@ export default function HomePathTracker() {
   useEffect(() => {
     if (pathname.startsWith("/map") || pathname.startsWith("/favorites")) return;
     const qs = params.toString();
-    saveHomePath(qs ? `${pathname}?${qs}` : pathname);
+    trackHomePath(qs ? `${pathname}?${qs}` : pathname);
   }, [pathname, params]);
   return null;
 }

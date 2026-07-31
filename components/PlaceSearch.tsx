@@ -1,9 +1,9 @@
 "use client";
 
-// 장소 검색 팝업 (v5.3, 어르신 기준 재설계):
+// 장소 검색 팝업 (v5.4, 어르신 기준 재설계):
 // - 가운데 팝업 모달 (바텀시트 아님)
-// - 결과 목록: 내부 스크롤 + 스크롤바 숨김(.no-scrollbar), 넘칠 때만 ▼ 버튼
-// - 프로세스: 목록 탭 = 지도 미리보기(위치 확인) → 하단 [확인]을 눌러야 최종 선택
+// - 결과 목록: 내부 스크롤 + 스크롤바 숨김(.no-scrollbar)
+// - 프로세스: 목록 탭 → 그 항목 '바로 아래'에 지도 미리보기가 펼쳐짐 → 하단 [확인]을 눌러야 최종 선택
 import { useEffect, useRef, useState } from "react";
 import { useKakaoReady } from "@/lib/useKakao";
 import type { Place } from "@/lib/journey";
@@ -34,12 +34,9 @@ export default function PlaceSearchModal({
   const [results, setResults] = useState<KakaoPlace[]>([]);
   const [searching, setSearching] = useState(false);
   const [pending, setPending] = useState<KakaoPlace | null>(null); // 확인 전 임시 선택
-  const [canScrollDown, setCanScrollDown] = useState(false);
   const placesRef = useRef<any>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const mapBoxRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<any>(null);
-  const markerRef = useRef<any>(null);
 
   useEffect(() => {
     if (kakaoReady && !placesRef.current) {
@@ -53,7 +50,6 @@ export default function PlaceSearchModal({
       setQ("");
       setResults([]);
       setPending(null);
-      mapRef.current = null; // 미리보기 지도는 열 때마다 새로 생성
     }
   }, [open]);
 
@@ -84,34 +80,17 @@ export default function PlaceSearchModal({
     return () => clearTimeout(t);
   }, [q, open]);
 
-  // 임시 선택 → 지도 미리보기 표시
+  // 임시 선택 → 해당 항목 아래에 펼쳐진 지도 미리보기 생성
+  // (미리보기 div가 목록 안에서 위치를 옮겨 다니며 매번 새로 마운트되므로 지도도 매번 새로 만든다)
   useEffect(() => {
     if (!pending || !kakaoReady || !mapBoxRef.current) return;
     const kakao = window.kakao;
     const pos = new kakao.maps.LatLng(parseFloat(pending.y), parseFloat(pending.x));
-    if (!mapRef.current) {
-      mapRef.current = new kakao.maps.Map(mapBoxRef.current, { center: pos, level: 3, draggable: false });
-      markerRef.current = new kakao.maps.Marker({ position: pos });
-      markerRef.current.setMap(mapRef.current);
-    } else {
-      mapRef.current.relayout();
-      mapRef.current.setCenter(pos);
-      markerRef.current.setPosition(pos);
-    }
+    const map = new kakao.maps.Map(mapBoxRef.current, { center: pos, level: 3, draggable: false });
+    new kakao.maps.Marker({ position: pos }).setMap(map);
+    // 펼쳐진 지도가 목록 스크롤 밖에 있으면 보이도록 끌어온다
+    mapBoxRef.current.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [pending, kakaoReady]);
-
-  const checkScroll = () => {
-    const el = listRef.current;
-    if (!el) return setCanScrollDown(false);
-    setCanScrollDown(el.scrollTop + el.clientHeight < el.scrollHeight - 8);
-  };
-  useEffect(() => {
-    checkScroll();
-  }, [results, pending]);
-
-  const scrollDown = () => {
-    listRef.current?.scrollBy({ top: (listRef.current?.clientHeight ?? 200) * 0.7, behavior: "smooth" });
-  };
 
   const confirm = () => {
     if (!pending) return;
@@ -150,9 +129,9 @@ export default function PlaceSearchModal({
           <VoiceButton onResult={setQ} />
         </div>
 
-        {/* 결과 목록: 내부 스크롤 + 스크롤바 숨김 */}
+        {/* 결과 목록: 내부 스크롤 + 스크롤바 숨김. 선택한 항목 바로 아래에 지도가 펼쳐진다 */}
         <div className="relative mt-3 min-h-0 flex-1">
-          <div ref={listRef} onScroll={checkScroll} className="no-scrollbar h-full max-h-60 overflow-y-auto">
+          <div ref={listRef} className="no-scrollbar h-full max-h-[26rem] overflow-y-auto">
             {!q.trim() && (
               <p className="py-8 text-center leading-relaxed text-muted">
                 가고 싶은 곳의 이름이나
@@ -169,49 +148,41 @@ export default function PlaceSearchModal({
                 {results.map((p, i) => {
                   const isSel = pending === p;
                   return (
-                    <button
+                    <div
                       key={`${p.place_name}-${i}`}
-                      type="button"
-                      onClick={() => setPending(p)}
-                      className={`block w-full border-b border-line/50 px-4 py-3 text-left last:border-0 ${
-                        isSel ? "bg-primary-soft ring-2 ring-inset ring-primary" : "active:bg-primary-soft"
-                      }`}
+                      className={`border-b border-line/50 last:border-0 ${isSel ? "bg-primary-soft" : ""}`}
                     >
-                      <span className="text-[0.95rem] font-bold">{p.place_name}</span>
-                      <span className="mt-0.5 block text-[0.75rem] text-muted">
-                        {p.road_address_name || p.address_name}
-                      </span>
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => setPending(isSel ? null : p)}
+                        className={`block w-full px-4 py-3 text-left ${
+                          isSel ? "" : "active:bg-primary-soft"
+                        }`}
+                      >
+                        <span className={`text-[0.95rem] font-bold ${isSel ? "text-primary" : ""}`}>
+                          {p.place_name}
+                        </span>
+                        <span className="mt-0.5 block text-[0.75rem] text-muted">
+                          {p.road_address_name || p.address_name}
+                        </span>
+                      </button>
+                      {/* 선택한 항목 바로 아래에 종속된 지도 미리보기 */}
+                      {isSel && (
+                        <div className="px-3 pb-3">
+                          <p className="mb-1 text-[0.8rem] font-bold text-muted">이 위치가 맞나요?</p>
+                          <div
+                            ref={mapBoxRef}
+                            className="h-36 w-full overflow-hidden rounded-xl border-2 border-primary"
+                          />
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>
             )}
           </div>
-
-          {/* 넘칠 때만 ▼ (스크롤바가 숨겨져 있으므로 유일한 '더 있음' 신호) */}
-          {canScrollDown && (
-            <button
-              type="button"
-              onClick={scrollDown}
-              aria-label="아래로 더 보기"
-              className="absolute bottom-1.5 left-1/2 z-10 flex h-10 w-10 -translate-x-1/2 items-center justify-center rounded-full bg-primary shadow-lg active:opacity-90"
-            >
-              <svg width="16" height="10" viewBox="0 0 22 14" aria-hidden>
-                <path d="M2 2 L11 11 L20 2" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          )}
         </div>
-
-        {/* 지도 미리보기 — 목록에서 장소를 누르면 위치 확인용으로 표시 */}
-        {pending && (
-          <div className="mt-3">
-            <p className="mb-1 text-[0.8rem] font-bold text-muted">
-              이 위치가 맞나요? — <span className="text-ink">{pending.place_name}</span>
-            </p>
-            <div ref={mapBoxRef} className="h-36 w-full overflow-hidden rounded-2xl border border-line" />
-          </div>
-        )}
 
         {/* 하단 확인 버튼 — 눌러야 최종 선택 */}
         <button

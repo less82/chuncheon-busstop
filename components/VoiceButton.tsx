@@ -59,11 +59,17 @@ export default function VoiceButton({ onResult }: { onResult: (text: string) => 
       <button
         type="button"
         onClick={start}
-        className="min-h-12 shrink-0 rounded-xl bg-primary px-3 text-[0.85rem] font-bold text-white"
+        aria-label="음성으로 찾기"
+        title="음성으로 찾기"
+        className="flex min-h-13 w-13 shrink-0 items-center justify-center rounded-xl bg-primary text-white active:opacity-90"
       >
-        음성으로
-        <br />
-        찾기
+        {/* 마이크 */}
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <rect x="9" y="2" width="6" height="11" rx="3" fill="currentColor" stroke="none" />
+          <path d="M5 11a7 7 0 0 0 14 0" />
+          <path d="M12 18v3" />
+          <path d="M8.5 21h7" />
+        </svg>
       </button>
       {listening && (
         <div

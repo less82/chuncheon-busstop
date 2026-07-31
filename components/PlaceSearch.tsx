@@ -102,7 +102,7 @@ export default function PlaceSearchModal({
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/45 px-4" onClick={onClose}>
       <div
-        className="flex max-h-[88%] w-full max-w-sm flex-col rounded-3xl bg-bg p-4 shadow-2xl"
+        className="flex h-[94%] w-full max-w-sm flex-col rounded-3xl bg-bg p-4 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 (닫기 버튼 없음 — 바깥 배경을 누르면 닫힌다) */}
@@ -122,7 +122,7 @@ export default function PlaceSearchModal({
 
         {/* 결과 목록: 내부 스크롤 + 스크롤바 숨김. 선택한 항목 바로 아래에 지도가 펼쳐진다 */}
         <div className="relative mt-3 min-h-0 flex-1">
-          <div ref={listRef} className="no-scrollbar h-full max-h-60 overflow-y-auto">
+          <div ref={listRef} className="no-scrollbar h-full overflow-y-auto">
             {!q.trim() && (
               <p className="px-4 py-8 text-center leading-relaxed text-muted">
                 가고 싶은 곳의 이름이나 주소를 입력해 주세요
@@ -130,17 +130,14 @@ export default function PlaceSearchModal({
             )}
             {q.trim() && kakaoReady && searching && <p className="py-6 text-center text-muted">찾는 중…</p>}
             {q.trim() && kakaoReady && !searching && results.length === 0 && (
-              <p className="py-6 text-center text-muted">찾지 못했어요 — 이름을 조금 바꿔보세요</p>
+              <p className="py-6 text-center text-muted">찾지 못했어요</p>
             )}
             {results.length > 0 && (
               <div className="overflow-hidden rounded-2xl border border-line bg-white">
                 {results.map((p, i) => {
                   const isSel = pending === p;
                   return (
-                    <div
-                      key={`${p.place_name}-${i}`}
-                      className={`border-b border-line/50 last:border-0 ${isSel ? "bg-primary-soft" : ""}`}
-                    >
+                    <div key={`${p.place_name}-${i}`} className="border-b border-line/50 last:border-0">
                       <button
                         type="button"
                         onClick={() => {

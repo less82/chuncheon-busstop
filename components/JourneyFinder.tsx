@@ -139,7 +139,7 @@ export default function JourneyFinder() {
       >
         <p className="flex items-center justify-between text-[0.8rem] font-bold text-muted">
           출발
-          <span className="font-bold text-primary">눌러서 변경 ›</span>
+          <span className="font-bold text-primary">변경</span>
         </p>
         <p className="mt-0.5 text-[1.05rem] font-bold">
           {origin ? (
@@ -165,7 +165,7 @@ export default function JourneyFinder() {
       >
         <p className="flex items-center justify-between text-[0.8rem] font-bold text-muted">
           도착
-          <span className="font-bold text-primary">눌러서 변경 ›</span>
+          <span className="font-bold text-primary">변경</span>
         </p>
         <p className="mt-0.5 text-[1.05rem] font-bold">
           {dest ? dest.name : <span className="text-muted">어디로 가세요?</span>}
